@@ -2,7 +2,7 @@
 
 **Цель проекта:** самодельный USB-квадрант тяги для Microsoft Flight Simulator (MSFS), вдохновлённый Airbus A320.  
 **Зафиксирована архитектура:** 2026-10-19  
-**Текущая базовая версия прошивки:** 1.0.01 — разработка, проверка на целевом оборудовании не выполнена.
+**Текущая разрабатываемая версия прошивки:** 1.0.02 — критерии проверки ещё не подтверждены на целевом оборудовании.
 
 ## Зафиксированные решения
 
@@ -20,9 +20,12 @@
 ## Этапы
 
 ### 1.0.02 — Надёжные датчики и USB HID
+**Состояние:** исходный код обновлён; компиляция и аппаратная проверка ещё не подтверждены.
+
 - Скомпилировать проект с точным описанием целевой платы Pro Micro и выбранной библиотекой Joystick.
 - Проверить оба канала AS5600 через TCA9548A.
-- Явно диагностировать ошибки датчиков и определить безопасное поведение при потере датчика; не выдавать старые данные за актуальные.
+- Проверить, что ошибки чтения явно отображаются в Serial, а удержание последнего HID-значения не маскируется под новое измерение.
+- Проверить ошибочную калибровку с одинаковыми конечными значениями.
 - Проверить переход угла через границу 4095 → 0.
 - Проверить диапазоны и направление HID-осей, стабильность обновления и повторное подключение USB.
 - Записать результаты проверок аппаратуры и ПО.
@@ -31,7 +34,7 @@
 
 ### 1.0.03 — Калибровка и хранение конфигурации
 - Определить версионируемую структуру конфигурации.
-- Настраивать минимум, максимум и направление каждой оси без редактирования исходного кода.
+- Реализовать пользовательскую калибровку каждого рычага без редактирования исходного кода. При проектировании алгоритма оценить подход с опорным углом и подписанными смещениями, используемый в OpenNauticalController, и сопоставить его с текущим круговым диапазоном от начала до конца.
 - Проверять диапазоны и корректно обрабатывать переход через ноль.
 - Сохранять параметры в EEPROM с сигнатурой/версией и проверкой целостности.
 - Добавить команды Serial для чтения состояния и конфигурации, изменения параметров, сохранения и сброса настроек.
@@ -82,7 +85,7 @@
 
 **Project target:** DIY USB throttle quadrant for Microsoft Flight Simulator (MSFS), inspired by Airbus A320 controls.  
 **Architecture baseline:** 2026-10-19  
-**Current firmware baseline:** 1.0.01 — development only; target hardware validation is pending.
+**Current development firmware:** 1.0.02 — target-hardware validation criteria have not yet been confirmed.
 
 ## Fixed decisions
 
@@ -95,14 +98,17 @@
 - Mechanical goal: Airbus A320-style IDLE, CL, FLX/MCT and TOGA detents. Measure final geometry and calibration values on the completed mechanism.
 - REVERSE implementation is intentionally undecided. The architecture must support an angle zone, a separate lift switch/sensor, or a separate button/switch.
 - SPEED BRAKE, FLAPS and extra buttons/switches are deferred until the two main levers are stable.
-- The versions below are planned milestones, not claims that these features already exist.
+- The versions below are planned milestones, not claims that all features already exist.
 
 ## Milestones
 
 ### 1.0.02 — Reliable sensors and USB HID
+**Status:** source updated; compilation and hardware validation are still pending.
+
 - Compile with the exact target Pro Micro board definition and selected Joystick library.
 - Verify both AS5600 channels through TCA9548A.
-- Report sensor errors explicitly and define safe behaviour after sensor loss; never silently present stale data as current.
+- Confirm that read faults are explicit in Serial and that a held HID value is not presented as a new measurement.
+- Test rejection of equal calibration endpoints.
 - Test angle wrap-around across 4095 → 0.
 - Verify HID axis ranges, direction, update stability and USB reconnection.
 - Record hardware and software test results.
@@ -111,7 +117,7 @@
 
 ### 1.0.03 — Calibration and configuration storage
 - Define a versioned configuration structure.
-- Calibrate each axis minimum, maximum and direction without editing source code.
+- Implement user calibration for each lever without editing source code. Evaluate the reference-angle plus signed-offset method used by OpenNauticalController against the current circular start-to-end range representation.
 - Validate ranges and handle wrap-around correctly.
 - Save settings to EEPROM with a signature/version and integrity check.
 - Add Serial commands to read status/configuration, change values, save and restore defaults.
@@ -153,5 +159,5 @@
 
 - Do not mark a milestone complete until its exit criteria are tested.
 - Keep firmware changes small and update CHANGELOG.md.
-- Never claim hardware validation without actual test results.
+- Never claim hardware validation without actual results.
 - Keep SPEED BRAKE and FLAPS out of the first stable firmware milestone.
