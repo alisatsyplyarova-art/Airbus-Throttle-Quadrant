@@ -1,6 +1,24 @@
 # История изменений / Changelog
 
-## Не выпущено — двуязычная документация (2026-10-19)
+## 1.0.02 — Обработка ошибок датчиков и проверка диапазона / Sensor faults and calibration span validation
+
+- Обновлена диагностика: при ошибке чтения `ERR_READ` явно указывает, что значение HID удерживается (`HID HOLD`), а не обновляется новым измерением.
+- При некорректном диапазоне калибровки выводится `ERR_CAL`; одинаковые конечные значения больше не превращаются в диапазон почти на полный оборот.
+- Сохранена круговая арифметика для диапазона, пересекающего 4095 → 0.
+- Выбран предварительный резервный режим при ошибке датчика: удерживать последнее корректное значение HID, явно сообщая об ошибке через Serial.
+
+**Проверка:** изменения в исходном коде внесены, но компиляция и проверка на реальном оборудовании ещё не подтверждены. Этап 1.0.02 не следует считать завершённым до прохождения критериев из ROADMAP.md.
+
+## 1.0.02 — Sensor fault handling and calibration span validation
+
+- Diagnostics now explicitly report `ERR_READ` and `HID HOLD` when a sensor read fails, making clear that the HID value is held rather than updated from a new measurement.
+- Invalid calibration ranges report `ERR_CAL`; equal endpoints are no longer treated as an almost-full-turn range.
+- Circular arithmetic remains in place for travel crossing 4095 → 0.
+- A provisional sensor-fault fallback is defined: hold the last valid HID value and explicitly report the fault over Serial.
+
+**Validation:** source changes have been committed, but compilation and real-hardware testing are not yet confirmed. Do not mark milestone 1.0.02 complete until the ROADMAP.md exit criteria pass.
+
+## Не выпущено — двуязычная документация (2026-10-19) / Unreleased — bilingual documentation (2026-10-19)
 
 - Установлен приоритет русского языка: русская версия документа идёт первой, английская — следом.
 - Обновлён README.md; дорожная карта и архитектура прошивки подготовлены к двуязычному ведению.
@@ -9,9 +27,7 @@
 - Механизм REVERSE намеренно оставлен открытым: угловая зона, отдельный датчик/выключатель подъёма, кнопка/переключатель или отключённый режим.
 - SPEED BRAKE, FLAPS и дополнительные кнопки/переключатели отложены до стабилизации основных рычагов.
 
-**Это обновление документации не означает, что появились новые функции прошивки или что оборудование прошло проверку.**
-
-## Unreleased — bilingual documentation (2026-10-19)
+**Это обновление документации не означает, что оборудование прошло проверку.**
 
 - Set Russian as the primary language: Russian documentation comes first, followed by English.
 - Updated README.md and prepared the roadmap and firmware architecture for bilingual maintenance.
@@ -20,7 +36,7 @@
 - Kept the REVERSE mechanism intentionally open: angle zone, separate lift sensor/switch, button/switch, or disabled mode.
 - Deferred SPEED BRAKE, FLAPS and additional buttons/switches until the main levers are stable.
 
-**This documentation update does not claim new firmware features or hardware validation.**
+**This documentation update does not claim hardware validation.**
 
 ## 1.0.01 — Начальная версия разработки / Initial development baseline
 
