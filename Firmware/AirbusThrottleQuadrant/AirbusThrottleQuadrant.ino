@@ -41,7 +41,7 @@ const bool R_INVERT = false;
 const uint16_t HID_MIN = 0;
 const uint16_t HID_MAX = 1023;
 
-// Exponential smoothing: 0 = no filtering; larger values = smoother/slower.
+// EMA alpha: 1 = no filtering; smaller values = smoother/slower (0 would freeze the output).
 const float FILTER_ALPHA = 0.25f;
 const uint32_t DEBUG_INTERVAL_MS = 250;
 
@@ -125,6 +125,9 @@ void setup() {
   Joystick.setXAxisRange(HID_MIN, HID_MAX);
   Joystick.setYAxisRange(HID_MIN, HID_MAX);
   Joystick.begin();
+  // Start from a known HID value so the fault policy's initial HOLD value is real.
+  Joystick.setXAxis((int)filteredL);
+  Joystick.setYAxis((int)filteredR);
 
   Serial.println();
   Serial.println(F("Airbus Throttle Quadrant"));
