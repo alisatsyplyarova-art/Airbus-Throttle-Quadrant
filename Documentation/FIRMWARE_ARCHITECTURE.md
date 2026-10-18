@@ -4,7 +4,7 @@
 **Симулятор:** Microsoft Flight Simulator  
 **Управление симулятором:** USB HID  
 **Настройка и диагностика:** USB Serial  
-**Статус:** проектируемая архитектура; реализация будет выполняться поэтапно.
+**Текущая разрабатываемая прошивка:** 1.0.02. Код и аппаратная работа ещё не прошли окончательную проверку.
 
 ## 1. Поток данных
 
@@ -15,7 +15,7 @@
 5. Выходной слой передаёт оси/кнопки через USB HID, а состояние и настройки — через Serial.
 6. Хранилище конфигурации проверяет и сохраняет настройки в EEPROM.
 
-Достоверность датчика должна храниться отдельно от последнего измеренного значения. При ошибке чтения прошивка обязана сообщить об ошибке и применить документированную резервную стратегию, а не молча выдавать старые данные как исправные. Конкретное поведение HID при потере датчика необходимо выбрать и проверить до завершения этапа 1.0.02.
+Достоверность датчика должна храниться отдельно от последнего измеренного значения. Текущая резервная стратегия версии 1.0.02 — удерживать последнее корректное значение HID, чтобы ошибка не вызывала резкий скачок оси, и явно сообщать через Serial об ошибке чтения (ERR_READ; HID HOLD) или ошибке диапазона (ERR_CAL). Удержанное значение не считается новым измерением. Это поведение ещё нужно проверить на целевом оборудовании и в MSFS.
 
 ## 2. Предлагаемые программные модули
 
@@ -115,7 +115,7 @@ SPEED BRAKE, FLAPS и дополнительные кнопки намеренн
 **Simulator:** Microsoft Flight Simulator  
 **Control link:** USB HID  
 **Configuration and diagnostics:** USB Serial  
-**Status:** planned architecture; implementation is incremental.
+**Current development firmware:** 1.0.02. Code and hardware behaviour have not yet completed final validation.
 
 ## 1. Data flow
 
@@ -126,7 +126,7 @@ SPEED BRAKE, FLAPS и дополнительные кнопки намеренн
 5. The output layer sends axes/buttons via USB HID and status/configuration responses via Serial.
 6. Configuration storage validates and persists settings in EEPROM.
 
-Sensor validity must be stored separately from the last measured value. On a read failure, firmware must report the fault and apply a documented fallback policy rather than silently presenting stale data as healthy. The precise HID fallback must be selected and tested before milestone 1.0.02 is complete.
+Sensor validity must be stored separately from the last measured value. The current firmware 1.0.02 fallback policy is to hold the last valid HID axis value to avoid an abrupt jump and explicitly report a read fault (ERR_READ; HID HOLD) or invalid range (ERR_CAL) over Serial. A held value is not a new measurement. This policy still requires validation on the target hardware and in MSFS.
 
 ## 2. Suggested software modules
 
