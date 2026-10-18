@@ -1,46 +1,157 @@
-# Firmware Architecture
+# Архитектура прошивки / Firmware Architecture
 
-**Target MCU:** Arduino Pro Micro, ATmega32U4
-**Simulator:** Microsoft Flight Simulator
-**Control link:** USB HID
-**Configuration/diagnostics link:** USB Serial
-**Status:** planned design; implementation is incremental.
+**Целевой микроконтроллер:** Arduino Pro Micro, ATmega32U4  
+**Симулятор:** Microsoft Flight Simulator  
+**Управление симулятором:** USB HID  
+**Настройка и диагностика:** USB Serial  
+**Статус:** проектируемая архитектура; реализация будет выполняться поэтапно.
+
+## 1. Поток данных
+
+1. Входы: AS5600 для рычагов L/R через TCA9548A; в будущем — отдельные выключатели и датчики.
+2. Слой датчиков выбирает канал мультиплексора, считывает угол и сообщает о достоверности данных и ошибках связи.
+3. Обработка осей разворачивает круговой диапазон, калибрует ход механизма, применяет инверсию и ограниченную фильтрацию, затем формирует нормализованные значения.
+4. Интерпретация управления определяет фиксированные положения с гистерезисом и обрабатывает выбранный источник сигнала REVERSE.
+5. Выходной слой передаёт оси/кнопки через USB HID, а состояние и настройки — через Serial.
+6. Хранилище конфигурации проверяет и сохраняет настройки в EEPROM.
+
+Достоверность датчика должна храниться отдельно от последнего измеренного значения. При ошибке чтения прошивка обязана сообщить об ошибке и применить документированную резервную стратегию, а не молча выдавать старые данные как исправные. Конкретное поведение HID при потере датчика необходимо выбрать и проверить до завершения этапа 1.0.02.
+
+## 2. Предлагаемые программные модули
+
+| Модуль | Назначение |
+|---|---|
+| SensorManager | Выбор канала TCA9548A, чтение AS5600, достоверность данных и счётчики ошибок |
+| AxisProcessor | Калибровка, обработка кругового диапазона, инверсия, фильтрация, нормализация |
+| DetentManager | Состояния IDLE, CL, FLX/MCT и TOGA; пороги и гистерезис |
+| ReverseInput | Выбор источника: ANGLE_ZONE, LIFT_SWITCH, BUTTON, DISABLED |
+| ButtonManager | Будущие кнопки/переключатели, подавление дребезга и логические состояния |
+| HidManager | Передача осей и кнопок через USB HID |
+| ConfigStorage | Версионируемые настройки, проверка и сохранение в EEPROM |
+| SerialProtocol | Команды, ответы, диагностика и связь с конфигуратором |
+
+Сначала это логические границы. Разделять скетч на отдельные файлы будем постепенно — после аудита существующего кода и проверки компиляции.
+
+## 3. Модель основных осей
+
+Для каждого рычага задаются независимо:
+- минимальное и максимальное сырое значение;
+- инверсия направления;
+- параметры фильтра;
+- необязательные пороги фиксированных положений.
+
+Выход AS5600 имеет разрядность 12 бит: 0–4095. Поскольку это круговое измерение, калибровка должна корректно работать, если механический диапазон пересекает границу 4095 → 0. Одинаковые конечные значения нужно считать ошибочной конфигурацией, а не трактовать молча как полный оборот.
+
+Текущая привязка USB HID:
+- рычаг L → ось X;
+- рычаг R → ось Y.
+
+Итоговый диапазон HID и поведение осей необходимо подтвердить в Windows и MSFS.
+
+## 4. Модель фиксированных положений
+
+Фиксированные положения — это логические состояния, вычисленные из откалиброванной позиции. Они не создают физические упоры: упоры обеспечивает механика.
+
+Для каждого положения следует задавать порог и гистерезис — отдельные границы входа/выхода или эквивалентное правило с памятью состояния. Это предотвращает дрожание состояния около границы. Точные углы нельзя фиксировать до измерения готового механизма.
+
+Начальные состояния: IDLE, CL, FLX_MCT и TOGA. REVERSE остаётся отдельным настраиваемым источником сигнала и не должен быть необратимо связан с основной обработкой угла.
+
+## 5. Протокол конфигурации
+
+На первом этапе использовать текстовые команды, разделённые переводом строки, через USB Serial. Протокол предварительный; до зависимости приложения от него необходимо определить его версию.
+
+Планируемые группы команд:
+- состояние/версия: `GET_STATUS`, `GET_CONFIG`;
+- настройка осей: чтение и изменение минимума, максимума, инверсии и фильтра;
+- настройка фиксированных положений: чтение и изменение порогов;
+- сохранение: `SAVE_CONFIG`, `LOAD_DEFAULTS`.
+
+Каждая команда должна возвращать однозначный ответ об успехе или ошибке. Нужно проверять границы параметров, безопасно отклонять неизвестные команды и не блокировать цикл опроса датчиков и HID. Запись в EEPROM выполняется только по явной команде сохранения. Точный синтаксис, формат ответов и максимальную длину строки определить при реализации.
+
+## 6. Хранение настроек в EEPROM
+
+Использовать структуру с сигнатурой, версией схемы и проверкой целостности. При запуске:
+1. прочитать сохранённые данные;
+2. проверить сигнатуру, версию, допустимые диапазоны и целостность;
+3. применить корректные настройки или безопасные значения по умолчанию;
+4. сообщить через Serial об отсутствующей или некорректной конфигурации.
+
+Избегать лишних записей и предусмотреть миграцию схемы при добавлении новых полей.
+
+## 7. Конфигуратор Windows
+
+Планируемый стек: Python + PySide6 и библиотека последовательного порта, например pyserial.
+
+Начальные экраны:
+- подключение, версия прошивки и состояние;
+- текущие значения L/R и состояние датчиков;
+- калибровка осей и инверсия;
+- настройка фиксированных положений;
+- профили конфигурации: импорт/экспорт;
+- диагностика и ошибки команд.
+
+Конфигуратор работает только через документированный Serial-протокол. Закрытие приложения или потеря Serial-соединения не должны останавливать USB HID.
+
+## 8. Будущие входы
+
+SPEED BRAKE, FLAPS и дополнительные кнопки намеренно отложены до стабилизации и калибровки L/R. Их интерфейсы добавим после определения механического хода, типа датчиков и электрических уровней. Архитектура должна позволять расширять число осей и кнопок без переписывания базового кода датчиков L/R.
+
+## 9. Требования к проверке
+
+- Скомпилировать с документированным пакетом платы и точной версией библиотеки Joystick.
+- Проверить оба канала датчиков и намеренное отключение датчика.
+- Проверить переход угла через ноль и крайние точки.
+- Проверить направление и диапазон осей в свойствах игровых контроллеров Windows.
+- Проверить назначения и фиксированные положения в целевом самолёте MSFS.
+- Перезапустить питание и проверить сохранение EEPROM.
+- Проверить некорректные Serial-команды и отключение конфигуратора.
+- Записать реальные результаты; не описывать непроверенную прошивку как проверенную на оборудовании.
+
+---
+
+# Firmware Architecture — English
+
+**Target MCU:** Arduino Pro Micro, ATmega32U4  
+**Simulator:** Microsoft Flight Simulator  
+**Control link:** USB HID  
+**Configuration and diagnostics:** USB Serial  
+**Status:** planned architecture; implementation is incremental.
 
 ## 1. Data flow
 
-1. Inputs: AS5600 L/R through TCA9548A; future discrete switches and sensors.
-2. Sensor layer selects a multiplexer channel, reads raw angle and reports validity/communication errors.
-3. Axis processing unwraps/calibrates physical travel, applies inversion and bounded filtering, and produces normalized axis values.
-4. Control interpretation detects throttle detents with hysteresis and resolves the configured reverse-input source.
-5. Output layer sends axes/buttons via USB HID and status/configuration responses via Serial.
+1. Inputs: AS5600 sensors for levers L/R through TCA9548A; future discrete switches and sensors.
+2. The sensor layer selects a multiplexer channel, reads the angle, and reports data validity and communication errors.
+3. Axis processing unwraps circular travel, calibrates the mechanism, applies inversion and bounded filtering, then produces normalized values.
+4. Control interpretation detects detents with hysteresis and handles the configured REVERSE input source.
+5. The output layer sends axes/buttons via USB HID and status/configuration responses via Serial.
 6. Configuration storage validates and persists settings in EEPROM.
 
-Sensor validity must be separate from the last measured value. If a sensor read fails, firmware must report the fault and apply a documented fallback policy rather than silently presenting stale data as healthy. The precise HID fallback must be chosen and tested before milestone 1.0.02 is complete.
+Sensor validity must be stored separately from the last measured value. On a read failure, firmware must report the fault and apply a documented fallback policy rather than silently presenting stale data as healthy. The precise HID fallback must be selected and tested before milestone 1.0.02 is complete.
 
-## 2. Suggested module boundaries
+## 2. Suggested software modules
 
 | Module | Responsibility |
 |---|---|
 | SensorManager | TCA9548A channel selection, AS5600 reads, validity and error counters |
-| AxisProcessor | Calibration, circular travel handling, inversion, filtering, normalized values |
-| DetentManager | IDLE, CL, FLX/MCT and TOGA states; configurable thresholds and hysteresis |
+| AxisProcessor | Calibration, circular travel handling, inversion, filtering and normalization |
+| DetentManager | IDLE, CL, FLX/MCT and TOGA states; thresholds and hysteresis |
 | ReverseInput | Selectable source: ANGLE_ZONE, LIFT_SWITCH, BUTTON, DISABLED |
 | ButtonManager | Future switches/buttons, debounce and logical states |
 | HidManager | USB HID axis and button reports |
 | ConfigStorage | Versioned settings, validation and EEPROM persistence |
 | SerialProtocol | Commands, responses, diagnostics and configurator communication |
 
-These are logical boundaries first; files may be split gradually after the existing sketch is audited and compiling.
+These are logical boundaries first. Split the sketch into separate files gradually, after auditing the existing code and verifying compilation.
 
 ## 3. Main axis model
 
-Each throttle lever has independent configuration:
+Each lever has independent settings:
 - raw minimum and maximum;
 - direction inversion;
 - filter parameters;
 - optional detent thresholds.
 
-AS5600 output is 12-bit (0–4095). Since the reading is circular, calibration must correctly handle a physical range that crosses 4095 → 0. Equal endpoints must be treated as invalid configuration rather than silently assumed to mean a full revolution.
+AS5600 output is 12-bit (0–4095). Because the reading is circular, calibration must handle a mechanical range that crosses 4095 → 0. Equal endpoints must be treated as invalid configuration rather than silently interpreted as a full revolution.
 
 Current USB HID mapping:
 - lever L → X axis;
@@ -50,41 +161,41 @@ The final HID range and axis behaviour must be confirmed in Windows and MSFS.
 
 ## 4. Detent model
 
-Detents are logical states derived from calibrated position; they do not physically create the mechanical stops. Physical detents belong to the mechanical design.
+Detents are logical states derived from calibrated position; they do not physically create the stops. Physical detents belong to the mechanical design.
 
-Each detent should have a configurable centre/threshold and hysteresis (separate entry/exit boundary or equivalent stateful rule) to prevent flicker around a boundary. Exact angles are not hard-coded until the finished mechanism can be measured.
+Each detent should have a configurable threshold and hysteresis—separate entry/exit boundaries or an equivalent stateful rule—to prevent flicker near a boundary. Exact angles must not be fixed until the completed mechanism is measured.
 
-Initial states to support: IDLE, CL, FLX_MCT, TOGA. REVERSE remains a separately configurable input source and must not be coupled irreversibly to the main angle calculation.
+Initial states: IDLE, CL, FLX_MCT and TOGA. REVERSE remains a separate configurable input source and must not be irreversibly coupled to the main angle processing.
 
 ## 5. Configuration protocol
 
-Use newline-delimited text commands over USB Serial for the first implementation. The protocol is provisional and must be versioned before the PC application depends on it.
+Initially use newline-delimited text commands over USB Serial. The protocol is provisional and must be versioned before the PC application depends on it.
 
 Planned command groups:
-- status/version: GET_STATUS, GET_CONFIG;
-- axis configuration: read/set minimum, maximum, inversion and filter;
-- detent configuration: read/set thresholds;
-- persistence: SAVE_CONFIG, LOAD_DEFAULTS.
+- status/version: `GET_STATUS`, `GET_CONFIG`;
+- axis settings: read/change minimum, maximum, inversion and filter;
+- detent settings: read/change thresholds;
+- persistence: `SAVE_CONFIG`, `LOAD_DEFAULTS`.
 
-Every command needs a clear success/error response. Validate input bounds, reject unknown commands safely and keep the sensor/HID loop non-blocking. Only explicit save operations should write EEPROM. The exact grammar, response schema and maximum line length must be specified during implementation.
+Every command needs a clear success/error response. Validate bounds, safely reject unknown commands, and keep the sensor/HID loop non-blocking. Only explicit save commands should write EEPROM. Specify exact grammar, response format and maximum line length during implementation.
 
 ## 6. EEPROM configuration
 
 Use a structure with a signature, schema version and integrity check. On startup:
 1. read stored data;
 2. verify signature, version, ranges and integrity;
-3. use valid configuration or load safe defaults;
-4. report invalid/missing configuration over Serial.
+3. apply valid configuration or safe defaults;
+4. report missing or invalid configuration over Serial.
 
-Avoid unnecessary writes. Plan for future schema migration when fields are added.
+Avoid unnecessary writes and plan for schema migration as fields are added.
 
 ## 7. Windows configurator
 
 Planned stack: Python + PySide6, with a serial-port library such as pyserial.
 
 Initial screens:
-- connection and firmware/status;
-- live L/R readings and sensor health;
+- connection, firmware version and status;
+- live L/R values and sensor health;
 - axis calibration and inversion;
 - detent configuration;
 - configuration profiles (import/export);
@@ -94,11 +205,11 @@ The configurator communicates only through the documented Serial protocol. Closi
 
 ## 8. Future inputs
 
-SPEED BRAKE, FLAPS and extra buttons are deliberately deferred until L/R stability and calibration are complete. Their hardware interfaces should be added only after mechanical travel, sensor type and electrical levels are known. The architecture should allow extra axes and button inputs without changing the core L/R sensor code.
+SPEED BRAKE, FLAPS and extra buttons are deliberately deferred until L/R stability and calibration are complete. Add their interfaces after mechanical travel, sensor types and electrical levels are known. The architecture should allow additional axes and buttons without rewriting the core L/R sensor code.
 
 ## 9. Validation requirements
 
-- Compile with the documented board package and exact Joystick library.
+- Compile with the documented board package and exact Joystick library version.
 - Test both sensor channels and deliberate sensor disconnection.
 - Test angle wrap-around and endpoints.
 - Confirm axis direction/range in Windows game-controller properties.
