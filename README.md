@@ -2,7 +2,7 @@
 
 Самодельный USB-квадрант управления тягой для Microsoft Flight Simulator (MSFS), вдохновлённый органами управления Airbus A320.
 
-> **Статус:** начальная версия проекта; прошивка **1.0.01**. Работа на целевом оборудовании пока не подтверждена. Архитектура и дорожная карта описаны в документации; запланированные функции не обязательно реализованы.
+> **Статус:** разработка, прошивка **1.0.02**. Работа на целевом оборудовании пока не подтверждена. Изменения версии 1.0.02 улучшают диагностику ошибок датчиков и отклоняют некорректный диапазон калибровки; это не означает завершение проверки этапа.
 
 ## Зафиксированные решения
 
@@ -16,21 +16,28 @@
 - Механизм REVERSE пока не выбран. Архитектура должна поддерживать угловую зону, отдельный датчик/выключатель подъёма рычага или отдельную кнопку/переключатель.
 - SPEED BRAKE, FLAPS и дополнительные кнопки/переключатели добавим после стабилизации двух основных рычагов.
 
-## Текущая базовая версия прошивки
+## Текущая прошивка
 
-Реализовано в `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`:
-- базовое чтение AS5600 через TCA9548A;
-- базовые оси USB HID X/Y;
-- калибровочные константы в исходном коде, инверсия и фильтрация;
-- диагностический вывод Serial.
+Файл: `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`.
+
+- Чтение двух AS5600 через TCA9548A.
+- USB HID оси X/Y.
+- Настраиваемые в исходном коде крайние углы, инверсия и фильтрация.
+- Круговая арифметика диапазона поддерживает пересечение 4095 → 0.
+- Одинаковые крайние углы отклоняются как ошибочная калибровка, а не трактуются как полный оборот.
+- При ошибке чтения датчика прошивка удерживает последнее значение HID-оси и явно показывает `ERR_READ` и `HID HOLD` в Serial. При некорректном диапазоне выводится `ERR_CAL`.
+- Диагностический вывод Serial — 115200 бод.
 
 Пока не реализовано или не проверено:
-- надёжная обработка ошибок датчиков на реальном оборудовании;
-- калибровка пользователем и сохранение конфигурации в EEPROM;
+
+- пользовательская калибровка и сохранение конфигурации в EEPROM;
+- проверка на реальном оборудовании и компиляция с окончательно выбранным окружением;
 - автомат состояний фиксированных положений рычага;
 - абстракция источника сигнала REVERSE;
 - конфигуратор для Windows;
 - SPEED BRAKE, FLAPS и дополнительные кнопки.
+
+**Политика ошибки датчика:** HID удерживает последнее корректное положение оси, чтобы не создавать резкий скачок. Это удержанное значение не считается новым измерением; ошибка обозначается в Serial. Такое поведение требует проверки на реальном оборудовании и в MSFS.
 
 ## Оборудование
 
@@ -51,7 +58,7 @@
 4. Проверьте выбор платы, выводы SDA/SCL, каналы датчиков и электрические уровни.
 5. Загрузите прошивку и откройте Serial Monitor на скорости 115200 бод.
 
-Скетч рассчитан на адрес TCA9548A `0x70`, левый рычаг L на канале 0 и правый R на канале 1. Требуется компиляция и проверка на фактическом оборудовании.
+Скетч рассчитан на адрес TCA9548A `0x70`, левый рычаг L на канале 0 и правый R на канале 1. Компиляция и проверка на фактическом оборудовании пока не подтверждены.
 
 ## Документы проекта
 
@@ -62,7 +69,7 @@
 
 ## Версии и проверка
 
-Текущая базовая версия прошивки — 1.0.01. Плановые этапы описаны в дорожной карте; этап нельзя считать завершённым, пока не проверены критерии его готовности. Подробности — в CHANGELOG.md.
+Текущая разрабатываемая версия — 1.0.02. Этап нельзя считать завершённым, пока не выполнены критерии проверки на целевом оборудовании. Подробности — в CHANGELOG.md и ROADMAP.md.
 
 Это любительский контроллер, а не сертифицированное авиационное оборудование. Физические фиксированные положения создаются механикой; AS5600 только измеряет угол.
 
@@ -72,7 +79,7 @@
 
 DIY USB throttle quadrant for Microsoft Flight Simulator (MSFS), inspired by Airbus A320 controls.
 
-> **Status:** initial development baseline, firmware **1.0.01**. Operation on target hardware has not yet been validated. The architecture and roadmap are documented; planned features are not necessarily implemented.
+> **Status:** firmware **1.0.02** is under development. Target hardware has not been validated. This version improves sensor-fault diagnostics and rejects invalid calibration spans; it does not mean the milestone has passed validation.
 
 ## Fixed project decisions
 
@@ -86,21 +93,28 @@ DIY USB throttle quadrant for Microsoft Flight Simulator (MSFS), inspired by Air
 - The REVERSE mechanism remains undecided. The architecture should support an angle zone, a separate lift switch/sensor, or a separate button/switch.
 - SPEED BRAKE, FLAPS and additional buttons/switches are deferred until the two main levers are stable.
 
-## Current firmware baseline
+## Current firmware
 
-Implemented in `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`:
-- basic AS5600 reads through TCA9548A;
-- basic USB HID X/Y axes;
-- source-code calibration constants, inversion and filtering;
-- Serial debug output.
+File: `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`.
+
+- Reads two AS5600 sensors through TCA9548A.
+- USB HID X/Y axes.
+- Source-code endpoint settings, inversion and filtering.
+- Circular arithmetic supports travel crossing 4095 → 0.
+- Equal endpoints are rejected as invalid calibration instead of being treated as a full revolution.
+- On sensor read failure, the last HID axis value is held and Serial explicitly reports `ERR_READ` and `HID HOLD`. Invalid calibration is reported as `ERR_CAL`.
+- Serial diagnostics run at 115200 baud.
 
 Not yet implemented or verified:
-- reliable sensor error handling on actual hardware;
-- user-facing calibration and EEPROM configuration;
+
+- user calibration and EEPROM configuration storage;
+- compilation in the final selected environment and real-hardware validation;
 - detent state machine;
 - REVERSE input abstraction;
 - Windows configurator;
 - SPEED BRAKE, FLAPS and extra buttons.
+
+**Sensor fault policy:** hold the last valid HID axis position to avoid an abrupt jump. The held value is not considered a new measurement; Serial reports the fault. This behaviour still requires testing on real hardware and in MSFS.
 
 ## Hardware
 
@@ -121,7 +135,7 @@ Wiring: [Electronics/WIRING.md](Electronics/WIRING.md).
 4. Verify board selection, SDA/SCL pins, sensor channels and electrical levels.
 5. Upload and open Serial Monitor at 115200 baud.
 
-The sketch expects TCA9548A address `0x70`, L on channel 0 and R on channel 1. Compilation and hardware testing against the actual installation are still required.
+The sketch expects TCA9548A address `0x70`, L on channel 0 and R on channel 1. Compilation and hardware validation are not yet confirmed.
 
 ## Project documents
 
@@ -132,6 +146,6 @@ The sketch expects TCA9548A address `0x70`, L on channel 0 and R on channel 1. C
 
 ## Versioning and validation
 
-The current firmware baseline is 1.0.01. Planned milestones are described in the roadmap; a milestone must not be called complete until its exit criteria have been tested. See CHANGELOG.md.
+The current development version is 1.0.02. The milestone is not complete until its target-hardware exit criteria pass. See CHANGELOG.md and ROADMAP.md.
 
 This is a hobby controller, not certified aviation equipment. Physical detents are created by the mechanism; AS5600 only measures angle.
