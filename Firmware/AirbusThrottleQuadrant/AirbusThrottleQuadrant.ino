@@ -1,6 +1,6 @@
 /*
   Airbus Throttle Quadrant
-  Firmware version: 1.0.01
+  Firmware version: 1.0.02
   Controller: Arduino Pro Micro / ATmega32U4
   Sensors: 2 x AS5600 via TCA9548A I2C multiplexer
 
@@ -16,7 +16,7 @@
 #include <Wire.h>
 #include <Joystick.h>
 
-const char* FW_VERSION = "1.0.01";
+const char* FW_VERSION = "1.0.02";
 
 // I2C addresses
 const uint8_t TCA9548A_ADDR = 0x70;
@@ -28,7 +28,8 @@ const uint8_t CHANNEL_L = 0;
 const uint8_t CHANNEL_R = 1;
 
 // Calibrate these values to the actual mechanical travel (0..4095).
-// Values can cross the 4095 -> 0 boundary.
+// The circular range may cross the 4095 -> 0 boundary.
+// Equal endpoints are invalid and do not represent a full revolution.
 const uint16_t L_RAW_MIN = 0;
 const uint16_t L_RAW_MAX = 4095;
 const uint16_t R_RAW_MIN = 0;
@@ -84,21 +85,28 @@ bool readAS5600(uint8_t channel, uint16_t &angle) {
 }
 
 // Convert a circular 12-bit angle to a linear calibrated travel value.
-// The raw angle can wrap across 4095 -> 0.
-uint16_t calibratedValue(uint16_t raw, uint16_t rawMin, uint16_t rawMax, bool invert) {
-  rawMin &= 0x0FFF;
-  rawMax &= 0x0FFF;
-  raw &= 0x0FFF;
+// Returns false for invalid calibration instead of treating equal endpoints
+// as an almost-full revolution.
+bool calibratedValue(
+  uint16_t raw,
+  uint16_t rawMin,
+  uint16_t rawMax,
+  bool invert,
+  uint16_t &output
+) {
+  if (rawMin > 4095 || rawMax > 4095 || rawMin == rawMax) return false;
 
+  raw &= 0x0FFF;
   uint16_t span = (rawMax - rawMin) & 0x0FFF;
-  if (span == 0) span = 4095; // avoid division by zero for identical endpoints
+  if (span == 0) return false;
 
   uint16_t offset = (raw - rawMin) & 0x0FFF;
   if (offset > span) offset = span;
 
   uint32_t value = ((uint32_t)offset * (HID_MAX - HID_MIN) + span / 2) / span;
   if (invert) value = HID_MAX - value;
-  return (uint16_t)(HID_MIN + value);
+  output = (uint16_t)(HID_MIN + value);
+  return true;
 }
 
 float smoothValue(float previous, uint16_t current, bool &initialized) {
@@ -123,22 +131,28 @@ void setup() {
   Serial.print(F("Firmware: "));
   Serial.println(FW_VERSION);
   Serial.println(F("TCA9548A: address 0x70; L=CH0; R=CH1"));
+  Serial.println(F("Sensor fault policy: hold last HID axis value and report fault."));
 }
 
 void loop() {
   uint16_t rawL = 0;
   uint16_t rawR = 0;
-  bool okL = readAS5600(CHANNEL_L, rawL);
-  bool okR = readAS5600(CHANNEL_R, rawR);
+  uint16_t targetL = 0;
+  uint16_t targetR = 0;
 
-  if (okL) {
-    uint16_t targetL = calibratedValue(rawL, L_RAW_MIN, L_RAW_MAX, L_INVERT);
+  bool readOkL = readAS5600(CHANNEL_L, rawL);
+  bool readOkR = readAS5600(CHANNEL_R, rawR);
+  bool calOkL = readOkL && calibratedValue(rawL, L_RAW_MIN, L_RAW_MAX, L_INVERT, targetL);
+  bool calOkR = readOkR && calibratedValue(rawR, R_RAW_MIN, R_RAW_MAX, R_INVERT, targetR);
+
+  // On read/calibration errors, do not publish a fabricated new position.
+  // HID retains the last valid axis value; Serial explicitly reports the hold.
+  if (calOkL) {
     filteredL = smoothValue(filteredL, targetL, haveL);
     Joystick.setXAxis((int)filteredL);
   }
 
-  if (okR) {
-    uint16_t targetR = calibratedValue(rawR, R_RAW_MIN, R_RAW_MAX, R_INVERT);
+  if (calOkR) {
     filteredR = smoothValue(filteredR, targetR, haveR);
     Joystick.setYAxis((int)filteredR);
   }
@@ -146,14 +160,37 @@ void loop() {
   uint32_t now = millis();
   if (now - lastDebugMs >= DEBUG_INTERVAL_MS) {
     lastDebugMs = now;
+
     Serial.print(F("L: "));
-    if (okL) Serial.print(rawL); else Serial.print(F("ERR"));
-    Serial.print(F(" -> "));
-    Serial.print((int)filteredL);
+    if (!readOkL) {
+      Serial.print(F("ERR_READ; HID HOLD="));
+      Serial.print((int)filteredL);
+    } else if (!calOkL) {
+      Serial.print(F("ERR_CAL; RAW="));
+      Serial.print(rawL);
+      Serial.print(F("; HID HOLD="));
+      Serial.print((int)filteredL);
+    } else {
+      Serial.print(rawL);
+      Serial.print(F(" -> "));
+      Serial.print((int)filteredL);
+    }
+
     Serial.print(F(" | R: "));
-    if (okR) Serial.print(rawR); else Serial.print(F("ERR"));
-    Serial.print(F(" -> "));
-    Serial.println((int)filteredR);
+    if (!readOkR) {
+      Serial.print(F("ERR_READ; HID HOLD="));
+      Serial.print((int)filteredR);
+    } else if (!calOkR) {
+      Serial.print(F("ERR_CAL; RAW="));
+      Serial.print(rawR);
+      Serial.print(F("; HID HOLD="));
+      Serial.print((int)filteredR);
+    } else {
+      Serial.print(rawR);
+      Serial.print(F(" -> "));
+      Serial.print((int)filteredR);
+    }
+    Serial.println();
   }
 
   delay(5);
