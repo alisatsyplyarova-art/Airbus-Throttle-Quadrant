@@ -1,6 +1,6 @@
 /*
   Airbus Throttle Quadrant
-  Firmware version: 1.0.04
+  Firmware version: 1.0.05
   Controller: Arduino Pro Micro / ATmega32U4
   Sensors: 2 x AS5600 via TCA9548A I2C multiplexer
 
@@ -20,8 +20,12 @@
 #include <Wire.h>
 #include <Joystick.h>
 #include "AxisMath.h"
+#include "ConfigCore.h"
+#include "ConfigStorage.h"
+#include <stdlib.h>
+#include <string.h>
 
-const char* FW_VERSION = "1.0.04";
+const char* FW_VERSION = "1.0.05";
 
 // I2C addresses
 const uint8_t TCA9548A_ADDR = 0x70;
@@ -46,22 +50,13 @@ const uint8_t PIN_SELECTOR_B = 7;
 const uint8_t SWITCH_COUNT = 4;
 const uint16_t SWITCH_DEBOUNCE_MS = 25;
 
-// Calibrate these values to the actual mechanical travel (0..4095).
-// The circular range may cross the 4095 -> 0 boundary.
-// Equal endpoints are invalid and do not represent a full revolution.
-const uint16_t L_RAW_MIN = 0;
-const uint16_t L_RAW_MAX = 4095;
-const uint16_t R_RAW_MIN = 0;
-const uint16_t R_RAW_MAX = 4095;
-
-const bool L_INVERT = false;
-const bool R_INVERT = false;
+// Runtime configuration is shared by Serial and future OLED/Windows interfaces.
+ConfigRecord config;
+bool configLoadedFromEeprom = false;
 
 const uint16_t HID_MIN = 0;
 const uint16_t HID_MAX = 1023;
 
-// EMA alpha: 1 = no filtering; smaller values = smoother/slower (0 would freeze the output).
-const float FILTER_ALPHA = 0.25f;
 const uint32_t DEBUG_INTERVAL_MS = 250;
 const uint32_t SENSOR_INTERVAL_MS = 10;
 const uint8_t SENSOR_LOST_AFTER_FAILURES = 10;
