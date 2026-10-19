@@ -62,3 +62,18 @@
 - После чтения прошивка пытается отключить все каналы TCA9548A
 - Диагностика Serial: 115200 бод
 - HID: ось X — левый рычаг; ось Y — правый рычаг; кнопки 1–2 — ENGINE MASTER 1/2; кнопки 3–4 — контакты A/B селектора.
+
+
+## 5. Выбранный блокируемый тумблер / Selected locking toggle switch
+
+Выбран дополнительный переключатель SALECOM T8013 ON-ON, 3 контакта, с требованием приподнимать рычаг перед переключением (lift-to-unlock).
+
+- Товар: [AliExpress, item 1005001356175064, SKU 12000036488180838](https://aliexpress.ru/item/1005001356175064.html?sku_id=12000036488180838).
+- Перед монтажом проверить точный вариант механизма блокировки и расположение ножек по карточке товара/чертежу.
+- Назначение переключателя, подключение к GND и конкретный GPIO пока не определены; не подключать к существующим D4–D7 без отдельного назначения в схеме и прошивке.
+
+The selected additional switch is SALECOM T8013 ON-ON, 3-pin, with a lift-to-unlock lever requirement.
+
+- Product: [AliExpress, item 1005001356175064, SKU 12000036488180838](https://aliexpress.ru/item/1005001356175064.html?sku_id=12000036488180838).
+- Verify the exact locking variant and PCB pin layout against the product listing/drawing before installation.
+- Its function, GND wiring and GPIO are not assigned yet; do not connect it to existing D4–D7 until the schematic and firmware assignment is defined.
