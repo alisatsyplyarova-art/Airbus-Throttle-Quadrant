@@ -4,6 +4,12 @@
 
 > **Статус:** прошивка 1.0.05 в разработке в feature-ветке. Добавляются калибровка через Serial, версионируемая конфигурация и EEPROM; CI и аппаратная проверка ещё не подтверждены.
 
+## Лицензия / License
+
+**Все права защищены.** Личное некоммерческое использование разрешено на условиях файла [LICENSE](LICENSE). Коммерческое использование, а также повторная публикация или размещение материалов проекта на других ресурсах допускаются только с предварительного письменного разрешения автора. Лицензия не является стандартной open-source лицензией.
+
+**All rights reserved.** Personal non-commercial use is permitted under the [LICENSE](LICENSE) terms. Commercial use and reposting or redistribution of project materials on other resources require the author's prior written permission. This is not a standard open-source license.
+
 ## Зафиксированные решения
 
 - Контроллер: Arduino Pro Micro (ATmega32U4).
