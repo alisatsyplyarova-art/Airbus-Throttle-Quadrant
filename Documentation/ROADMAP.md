@@ -2,7 +2,7 @@
 
 **Цель проекта:** самодельный USB-квадрант тяги для Microsoft Flight Simulator (MSFS), вдохновлённый Airbus A320.  
 **Зафиксирована архитектура:** 2026-10-19  
-**Текущая разрабатываемая версия прошивки:** 1.0.02 — критерии проверки ещё не подтверждены на целевом оборудовании.
+**Текущая разрабатываемая версия прошивки:** 1.0.04 — CI добавлен, аппаратная проверка не подтверждена.
 
 ## Зафиксированные решения
 
@@ -19,7 +19,7 @@
 
 ## Этапы
 
-### 1.0.02 — Надёжные датчики и USB HID
+### 1.0.04 — Надёжность датчиков, I²C и тесты
 **Состояние:** исходный код обновлён; компиляция и аппаратная проверка ещё не подтверждены.
 
 - Скомпилировать проект с точным описанием целевой платы Pro Micro и выбранной библиотекой Joystick.
@@ -32,7 +32,7 @@
 
 **Критерии завершения:** устойчивые повторяемые показания и стабильные оси L/R на реальном оборудовании; ошибки видны в диагностике.
 
-### 1.0.03 — Калибровка и хранение конфигурации
+### 1.0.05 — Калибровка и хранение конфигурации
 - Определить версионируемую структуру конфигурации.
 - Реализовать пользовательскую калибровку каждого рычага без редактирования исходного кода. При проектировании алгоритма оценить подход с опорным углом и подписанными смещениями, используемый в OpenNauticalController, и сопоставить его с текущим круговым диапазоном от начала до конца.
 - Проверять диапазоны и корректно обрабатывать переход через ноль.
@@ -41,7 +41,7 @@
 
 **Критерии завершения:** параметры сохраняются после выключения питания; неверная конфигурация безопасно отклоняется.
 
-### 1.1.00 — Фиксированные положения тяги и REVERSE
+### 1.1.00 — Детенты, REVERSE и интеграция с самолётами
 - Реализовать настраиваемые пороги и гистерезис.
 - Поддержать состояния IDLE, CL, FLX/MCT и TOGA.
 - Добавить настраиваемый источник REVERSE: ANGLE_ZONE, LIFT_SWITCH, BUTTON или DISABLED.
@@ -85,7 +85,7 @@
 
 **Project target:** DIY USB throttle quadrant for Microsoft Flight Simulator (MSFS), inspired by Airbus A320 controls.  
 **Architecture baseline:** 2026-10-19  
-**Current development firmware:** 1.0.02 — target-hardware validation criteria have not yet been confirmed.
+**Current development firmware:** 1.0.04 — CI has been added; hardware validation is pending.
 
 ## Fixed decisions
 
@@ -102,7 +102,7 @@
 
 ## Milestones
 
-### 1.0.02 — Reliable sensors and USB HID
+### 1.0.04 — Sensor reliability, I²C and tests
 **Status:** source updated; compilation and hardware validation are still pending.
 
 - Compile with the exact target Pro Micro board definition and selected Joystick library.
@@ -115,7 +115,7 @@
 
 **Exit criteria:** repeatable readings and stable L/R axes on actual hardware; faults are visible in diagnostics.
 
-### 1.0.03 — Calibration and configuration storage
+### 1.0.05 — Calibration and configuration storage
 - Define a versioned configuration structure.
 - Implement user calibration for each lever without editing source code. Evaluate the reference-angle plus signed-offset method used by OpenNauticalController against the current circular start-to-end range representation.
 - Validate ranges and handle wrap-around correctly.
@@ -124,7 +124,7 @@
 
 **Exit criteria:** settings survive power cycling; invalid configuration is rejected safely.
 
-### 1.1.00 — Throttle detents and REVERSE
+### 1.1.00 — Detents, REVERSE and aircraft integration
 - Implement configurable thresholds and hysteresis.
 - Support IDLE, CL, FLX/MCT and TOGA.
 - Add a configurable REVERSE source: ANGLE_ZONE, LIFT_SWITCH, BUTTON or DISABLED.
