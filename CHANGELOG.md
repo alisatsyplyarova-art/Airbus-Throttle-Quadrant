@@ -1,5 +1,25 @@
 # История изменений / Changelog
 
+## 1.0.03 — Переключатели двигателя и селектор / Engine switches and selector
+
+- Добавлены входы ENGINE MASTER 1 и ENGINE MASTER 2 на D4 и D5.
+- Добавлены два входа трёхпозиционного поворотного селектора на D6 и D7.
+- HID настроен на четыре кнопки: 1/2 — ENGINE MASTER 1/2, 3/4 — контакты A/B селектора.
+- Входы используют `INPUT_PULLUP`, замыкание на GND означает ON; добавлено программное подавление дребезга 25 мс.
+- В Serial добавлена диагностика состояний переключателей.
+- Обновлена схема подключения.
+
+**Проверка:** код и документация внесены в репозиторий. Компиляция, соответствие конкретного селектора схеме 2NO и испытание на реальном оборудовании ещё не подтверждены.
+
+- Added ENGINE MASTER 1 and ENGINE MASTER 2 inputs on D4 and D5.
+- Added two inputs for a 3-position rotary selector on D6 and D7.
+- Configured four HID buttons: 1/2 for the engine master switches, 3/4 for selector contacts A/B.
+- Inputs use `INPUT_PULLUP`; contact closure to GND means ON. Added 25 ms software debounce.
+- Added switch-state diagnostics to Serial.
+- Updated the wiring guide.
+
+**Validation:** source and documentation have been committed. Compilation, the actual selector's 2NO contact behaviour, and real-hardware testing remain unconfirmed.
+
 ## 1.0.02 — Обработка ошибок датчиков и проверка диапазона / Sensor faults and calibration span validation
 
 - Обновлена диагностика: при ошибке чтения `ERR_READ` явно указывает, что значение HID удерживается (`HID HOLD`), а не обновляется новым измерением.
@@ -9,14 +29,12 @@
 
 **Проверка:** изменения в исходном коде внесены, но компиляция и проверка на реальном оборудовании ещё не подтверждены. Этап 1.0.02 не следует считать завершённым до прохождения критериев из ROADMAP.md.
 
-## 1.0.02 — Sensor fault handling and calibration span validation
+- Diagnostics explicitly report `ERR_READ` and `HID HOLD` when a sensor read fails.
+- Invalid calibration ranges report `ERR_CAL`; equal endpoints are not treated as an almost-full-turn range.
+- Circular arithmetic supports travel crossing 4095 → 0.
+- Provisional sensor-fault fallback holds the last valid HID value and reports the fault over Serial.
 
-- Diagnostics now explicitly report `ERR_READ` and `HID HOLD` when a sensor read fails, making clear that the HID value is held rather than updated from a new measurement.
-- Invalid calibration ranges report `ERR_CAL`; equal endpoints are no longer treated as an almost-full-turn range.
-- Circular arithmetic remains in place for travel crossing 4095 → 0.
-- A provisional sensor-fault fallback is defined: hold the last valid HID value and explicitly report the fault over Serial.
-
-**Validation:** source changes have been committed, but compilation and real-hardware testing are not yet confirmed. Do not mark milestone 1.0.02 complete until the ROADMAP.md exit criteria pass.
+**Validation:** compilation and real-hardware testing remain unconfirmed.
 
 ## Не выпущено — двуязычная документация (2026-10-19) / Unreleased — bilingual documentation (2026-10-19)
 
@@ -25,16 +43,16 @@
 - Сохранены зафиксированные решения по MSFS, Arduino Pro Micro ATmega32U4, рычагам L/R, датчикам AS5600 через TCA9548A и USB HID (L → X, R → Y).
 - Подтверждён выбор Python + PySide6 для планируемого конфигуратора Windows через USB Serial.
 - Механизм REVERSE намеренно оставлен открытым: угловая зона, отдельный датчик/выключатель подъёма, кнопка/переключатель или отключённый режим.
-- SPEED BRAKE, FLAPS и дополнительные кнопки/переключатели отложены до стабилизации основных рычагов.
+- SPEED BRAKE, FLAPS и дополнительные органы управления отложены до стабилизации основных рычагов.
 
 **Это обновление документации не означает, что оборудование прошло проверку.**
 
-- Set Russian as the primary language: Russian documentation comes first, followed by English.
+- Set Russian as the primary language, followed by English.
 - Updated README.md and prepared the roadmap and firmware architecture for bilingual maintenance.
-- Preserved the fixed decisions for MSFS, Arduino Pro Micro ATmega32U4, L/R levers, AS5600 sensors through TCA9548A, and USB HID mapping (L → X, R → Y).
+- Preserved decisions for MSFS, Arduino Pro Micro ATmega32U4, L/R levers, AS5600 through TCA9548A, and USB HID mapping.
 - Confirmed Python + PySide6 for the planned Windows configurator over USB Serial.
-- Kept the REVERSE mechanism intentionally open: angle zone, separate lift sensor/switch, button/switch, or disabled mode.
-- Deferred SPEED BRAKE, FLAPS and additional buttons/switches until the main levers are stable.
+- Kept the REVERSE mechanism open.
+- Deferred SPEED BRAKE, FLAPS and additional controls until the main levers are stable.
 
 **This documentation update does not claim hardware validation.**
 
