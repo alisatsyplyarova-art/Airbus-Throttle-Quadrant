@@ -26,7 +26,9 @@ jobs:
           arduino-cli config add board_manager.additional_urls https://raw.githubusercontent.com/sparkfun/Arduino_Boards/main/IDE_Board_Manager/package_sparkfun_index.json
           arduino-cli core update-index
           arduino-cli core install SparkFun:avr
-      - name: Install Joystick library
-        run: arduino-cli lib install "Joystick@2.1.1"
+      - name: Install Joystick library 2.1.1
+        run: |
+          mkdir -p "$HOME/Arduino/libraries"
+          git clone --depth 1 --branch v2.1.1 https://github.com/MHeironimus/ArduinoJoystickLibrary.git "$HOME/Arduino/libraries/Joystick"
       - name: Compile Pro Micro 5V/16MHz
         run: arduino-cli compile --fqbn SparkFun:avr:promicro:cpu=16MHzatmega32U4 Firmware/AirbusThrottleQuadrant
