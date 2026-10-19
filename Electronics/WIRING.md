@@ -1,34 +1,61 @@
-# Wiring — version 1.0.01
+# Схема подключения / Wiring — версия 1.0.03
 
-## I²C layout
+## 1. Датчики угла AS5600 / AS5600 angle sensors
 
-Both AS5600 modules normally use the same fixed I²C address, `0x36`. Connect them to separate downstream channels of the TCA9548A multiplexer.
+Оба модуля AS5600 обычно имеют одинаковый I²C-адрес `0x36`. Подключайте их к разным каналам мультиплексора TCA9548A.
 
 | Arduino Pro Micro | TCA9548A |
 |---|---|
 | SDA | SDA |
 | SCL | SCL |
 | GND | GND |
-| Suitable supply voltage | VIN/VCC, according to module specifications |
+| Подходящее питание | VIN/VCC согласно спецификации модуля |
 
-| Sensor | TCA9548A channel |
+| Датчик | Канал TCA9548A |
 |---|---|
-| AS5600 for Left lever (L) | SD0 / SC0 |
-| AS5600 for Right lever (R) | SD1 / SC1 |
+| Левый рычаг L | SD0 / SC0 (канал 0) |
+| Правый рычаг R | SD1 / SC1 (канал 1) |
 
-On the TCA9548A, connect each sensor's SDA/SCL to the matching channel SDA/SCL pair. Connect grounds together.
+Подключите SDA/SCL каждого датчика к соответствующей паре канала мультиплексора. Объедините GND.
 
-## Important power notes
+## 2. Переключатели / Switches
 
-- Verify the exact Pro Micro variant (5 V or 3.3 V) and the specifications of the AS5600 and TCA9548A breakout boards.
-- Some breakout boards have regulators or level shifting; others do not. Do not apply 5 V to a 3.3 V-only board or expose 3.3 V-only I²C pins to 5 V pull-ups.
-- Do not connect both AS5600 modules directly to the same I²C bus without a multiplexer; their identical addresses will conflict.
-- Fit the AS5600 magnet as required by the sensor module, centered and at the specified gap. Check the module documentation.
+Прошивка использует внутренние подтягивающие резисторы `INPUT_PULLUP`. Каждый контакт переключателя подключается между соответствующим цифровым выводом и GND. Внешний резистор не требуется.
 
-## Firmware defaults
+| Элемент управления | Вывод Pro Micro | HID |
+|---|---:|---|
+| ENGINE MASTER 1 | D4 — контакт на GND | Кнопка 1 |
+| ENGINE MASTER 2 | D5 — контакт на GND | Кнопка 2 |
+| Селектор, контакт A | D6 — контакт на GND | Кнопка 3 |
+| Селектор, контакт B | D7 — контакт на GND | Кнопка 4 |
 
-- TCA9548A address: `0x70`
-- Left sensor: channel 0
-- Right sensor: channel 1
-- AS5600 raw angle register: `0x0C` and `0x0D`
-- I²C speed: 100 kHz
+**Логика входов:** замкнутый контакт читается как LOW и считается нажатой HID-кнопкой; разомкнутый — HIGH и считается отпущенной. Программное подавление дребезга — 25 мс.
+
+### Трёхпозиционный поворотный селектор
+
+Для селектора с двумя нормально разомкнутыми контактами (2NO), каждый из которых замыкается в одном крайнем положении:
+
+| Положение селектора | D6 / контакт A | D7 / контакт B | HID |
+|---|---|---|---|
+| CRANK (крайнее положение A) | Замкнут | Разомкнут | Кнопка 3 |
+| NORM (центр) | Разомкнут | Разомкнут | Ни одна из кнопок 3/4 |
+| IGN/START (крайнее положение B) | Разомкнут | Замкнут | Кнопка 4 |
+
+Это ожидаемая схема для двух независимых контактов 2NO, а не универсальная распиновка любого переключателя. Перед подключением проверьте схему конкретной модели и прозвоните контакты мультиметром во всех трёх положениях. Если у переключателя другая контактная логика, нужно скорректировать таблицу/обработку.
+
+## 3. Питание и уровни сигналов / Power and logic levels
+
+- Уточните, какая именно Pro Micro используется: 5 В или 3,3 В.
+- Проверьте спецификации модулей AS5600 и TCA9548A: некоторые платы имеют стабилизатор/преобразователь уровней, другие — нет.
+- Не подавайте 5 В на плату, рассчитанную только на 3,3 В, и не допускайте подтяжки I²C к 5 В, если выводы не допускают такого уровня.
+- Не подключайте оба AS5600 напрямую к одной I²C-шине без мультиплексора: адреса датчиков совпадают.
+
+## 4. Параметры прошивки / Firmware defaults
+
+- Адрес TCA9548A: `0x70`
+- Левый датчик: канал 0
+- Правый датчик: канал 1
+- Регистр угла AS5600: `0x0C` и `0x0D`
+- Скорость I²C: 100 кГц
+- Диагностика Serial: 115200 бод
+- HID: ось X — левый рычаг; ось Y — правый рычаг; кнопки 1–2 — ENGINE MASTER 1/2; кнопки 3–4 — контакты A/B селектора.
