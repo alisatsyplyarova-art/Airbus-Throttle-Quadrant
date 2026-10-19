@@ -1,5 +1,18 @@
 # История изменений / Changelog
 
+## Не выпущено — выбран OLED-модуль с четырьмя кнопками (2026-10-19) / Unreleased — four-button OLED module selected (2026-10-19)
+
+- Зафиксирован модуль OLED 0,96″ 128×64 с контроллером SSD1315, интерфейсом I²C, питанием 3,3 В и четырьмя независимыми контактами кнопок K1–K4; размеры по описанию продавца — 44,53×27,66 мм.
+- Запланированы функции кнопок UP, DOWN, OK и BACK для автономного меню настройки и калибровки.
+- Адрес I²C (предположительно 0x3C), GPIO для K1–K4, совместимость библиотеки/инициализации SSD1315 и работа на общей шине с TCA9548A/AS5600 остаются предметом аппаратной проверки.
+- Это архитектурное решение; модуль ещё не подключён и не проверен на реальном устройстве.
+
+- Selected a 0.96-inch 128×64 OLED module using SSD1315, I²C, 3.3 V, and four independent K1–K4 button interfaces; seller-listed dimensions are 44.53×27.66 mm.
+- Planned button roles: UP, DOWN, OK and BACK for the stand-alone configuration/calibration menu.
+- The I²C address (expected 0x3C), GPIO mapping for K1–K4, SSD1315 library/initialization compatibility, and operation on the shared TCA9548A/AS5600 bus remain subject to hardware verification.
+- This records an architectural choice; the module has not yet been connected or tested on hardware.
+
+
 ## 1.0.04 — Надёжность датчиков и тесты / Sensor reliability and tests
 
 - Исправлена круговая калибровка: значение за пределами диапазона ограничивается ближайшим краем по круговому расстоянию.
