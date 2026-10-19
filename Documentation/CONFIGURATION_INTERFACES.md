@@ -12,10 +12,10 @@ USB HID должен продолжать работать, если Windows-к�
 
 ## 2. Вариант A — OLED на квадранте
 
-- Дисплей: SSD1306, 128×64, I²C, предполагаемый адрес 0x3C.
-- Подключение: общая I²C-шина с TCA9548A и двумя AS5600. Совместную работу и устойчивость шины необходимо проверить на реальном устройстве.
-- Кнопки: ВВЕРХ / ВНИЗ / ОК. D8/D9/D10 — предварительные кандидаты, назначение подтвердить по текущей схеме и используемым функциям GPIO до подключения.
-- Меню: Calibrate L, Calibrate R, Invert, Filter, Save, Reset.
+- Выбранный модуль: OLED 0,96″, 128×64, контроллер SSD1315, интерфейс I²C, питание 3,3 В; по описанию продавца четыре независимых контакта кнопок K1–K4 и размер 44,53×27,66 мм.
+- Подключение дисплея: общая I²C-шина с TCA9548A и двумя AS5600. Адрес 0x3C предварительный; проверить реальный адрес, совместимость библиотеки/инициализации SSD1315 и устойчивость общей шины на аппаратуре.
+- Кнопки: UP / DOWN / OK / BACK подключаются через K1–K4. GPIO не назначены до проверки распиновки модуля и свободных выводов Pro Micro.
+- Меню: Calibrate L, Calibrate R, Invert, Filter, Save, Reset. UP/DOWN перемещают выбор, OK подтверждает, BACK возвращает или отменяет.
 - Калибровка: указать рычаг → поставить IDLE → ОК → поставить TOGA → ОК → проверить диапазон → подтвердить.
 - Экран состояния: шкалы L/R, RAW, нормализованное/HID значение и состояние магнита AS5600.
 - Диагностика: ERR_READ, ERR_CAL, ERR_EEPROM; предусмотреть отмену и возврат без сохранения.
@@ -93,4 +93,4 @@ CRC обнаруживает случайное повреждение, но н�
 
 # English summary
 
-The OLED (SSD1306 128×64) and Windows/PySide6 configurator will share one firmware configuration/calibration core over a versioned USB Serial protocol. The EEPROM record will include a signature, schema version, settings and CRC; all fields will also be range-validated. The Windows configurator is planned first, followed by the onboard OLED. GPIO assignments and shared-bus operation remain subject to hardware verification.
+The selected OLED module is 0.96-inch 128×64 SSD1315, I²C, 3.3 V, with four independent K1–K4 button interfaces. GPIO mapping, I²C address (expected 0x3C), and SSD1315 library/initialization remain subject to hardware verification. The OLED and Windows/PySide6 configurator will share one firmware configuration/calibration core over a versioned USB Serial protocol. The EEPROM record will include a signature, schema version, settings and CRC; all fields will also be range-validated. The Windows configurator is planned first, followed by the onboard OLED. GPIO assignments and shared-bus operation remain subject to hardware verification.
