@@ -1,5 +1,27 @@
 # История изменений / Changelog
 
+## 1.0.04 — Надёжность датчиков и тесты / Sensor reliability and tests
+
+- Исправлена обработка значения вне кругового калибровочного диапазона: оно ограничивается ближайшим краем по круговому расстоянию, а не всегда концом диапазона.
+- Убрано произвольное стартовое значение осей 50%; оси обновляются только после первого валидного измерения.
+- Добавлен тайм-аут I²C 25 мс, скорость 400 кГц и попытка отключения всех каналов TCA9548A после чтения.
+- Добавлено чтение регистра STATUS AS5600 (`0x0B`): MD сообщает об обнаружении магнита, ML/MH дают предупреждения о слабом/сильном поле.
+- Добавлена диагностика потери датчика после 10 подряд неудачных чтений/отсутствия магнита и сообщение о восстановлении.
+- Убран `delay(5)`: опрос датчиков запускается по `millis()` с интервалом 10 мс.
+- Математика круговой калибровки вынесена в `AxisMath.h`; добавлены host-тесты и GitHub Actions для тестов и компиляции Pro Micro.
+
+**Проверка:** код внесён в репозиторий. До результата GitHub Actions и проверки на реальном устройстве прошивку не считать полностью проверенной. `Wire.setWireTimeout()` требует совместимого AVR Wire core.
+
+- Fixed out-of-range circular calibration so samples clamp to the nearest endpoint by circular distance.
+- Removed arbitrary 50% startup axis values; axes update after the first valid sample.
+- Added a 25 ms I²C timeout, 400 kHz bus speed, and an attempt to disable all TCA9548A channels after reads.
+- Read AS5600 STATUS register (`0x0B`): MD detects the magnet, ML/MH warn about weak/strong field.
+- Added sensor-loss reporting after 10 consecutive failed reads/missing-magnet samples and recovery notification.
+- Replaced `delay(5)` with a `millis()`-scheduled 10 ms sensor poll.
+- Moved circular calibration math into `AxisMath.h`; added host tests and GitHub Actions for tests and Pro Micro compilation.
+
+**Validation:** changes are committed, but the firmware is not considered fully validated until CI and real-hardware checks pass. `Wire.setWireTimeout()` requires a compatible AVR Wire core.
+
 ## Не выпущено — механическая концепция AS5600 (2026-10-19) / Unreleased — AS5600 mounting concept
 
 - Добавлен документ `Mechanical/AS5600_MOUNTING.md` с предварительной конструкцией держателя магнита и регулируемого кронштейна AS5600.
