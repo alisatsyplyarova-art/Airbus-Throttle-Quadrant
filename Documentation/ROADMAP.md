@@ -72,6 +72,32 @@
 - Документировать версии прошивки, конфигуратора и схемы настроек.
 - Выполнить полный регрессионный тест и описать известные ограничения.
 
+## Новые требования и будущие функции
+
+### Калибровка без ПК
+- Долгое нажатие назначенной кнопки запускает калибровку.
+- Для каждого рычага пользователь выставляет IDLE, затем TOGA; прошивка фиксирует сырые конечные значения и направление.
+- Проверить диапазон, одинаковые концы и круговой переход; сохранить версионируемые параметры в EEPROM с сигнатурой и CRC.
+- Предусмотреть отмену и безопасный выход из режима калибровки.
+
+### Детенты и REVERSE
+- Программные детенты IDLE/CL/FLX-MCT/TOGA как HID-кнопки рядом с аналоговой осью.
+- Отдельный сигнал/ось для зоны REVERSE и профиль FlyByWire A32NX с учётом его детентов.
+- Профильные пороги и гистерезис, не зашитые под один самолёт.
+- Механические детенты: шарик с пружиной и печатная профилированная кулачковая пластина.
+
+### Дополнительные органы управления
+- Кнопки A/THR DISCONNECT и TOGA на рычагах.
+- FLAPS — 5 положений; SPEED BRAKE — ось или энкодер после уточнения механики.
+- Колесо триммера на AS5600 или энкодере.
+- Парковочный тормоз и CRANK/NORM/START как отдельные кнопки или логическое HID-событие.
+- Индикаторы ENG MASTER FAULT/FIRE и другие лампы через исследуемую интеграцию MobiFlight или SimConnect.
+
+### Конфигуратор и профили
+- Профили самолётов: FlyByWire A320, Fenix и штатный A320neo.
+- Диагностика: график L/R в реальном времени и шкала статуса магнитного поля MD/ML/MH.
+- Сохранять host-тесты математики и CI-компиляцию как обязательную проверку.
+
 ## Правила работы
 
 - Не считать этап завершённым до проверки его критериев.
@@ -154,6 +180,32 @@
 - Publish wiring, assembly and calibration instructions.
 - Document firmware, configurator and configuration-schema versions.
 - Run a full regression checklist and document known limitations.
+
+## New requirements and future features
+
+### Stand-alone calibration
+- A long press of a designated button enters calibration mode.
+- For each lever, guide the user through IDLE then TOGA; capture raw endpoints and direction.
+- Validate the span, equal endpoints and circular wrap-around; store versioned settings in EEPROM with signature and CRC.
+- Provide cancellation and a safe exit from calibration mode.
+
+### Detents and REVERSE
+- Expose software IDLE/CL/FLX-MCT/TOGA detents as HID buttons alongside the analog axis.
+- Consider a separate REVERSE signal/axis and a FlyByWire A32NX profile respecting its detent expectations.
+- Keep thresholds and hysteresis aircraft-profile-specific.
+- Mechanical detents: spring-loaded ball and a 3D-printed profiled cam plate.
+
+### Additional controls
+- Lever-mounted A/THR DISCONNECT and TOGA buttons.
+- Five-position FLAPS; SPEED BRAKE as an axis or encoder after the mechanics are defined.
+- Trim wheel using AS5600 or an encoder.
+- Parking brake and CRANK/NORM/START as separate buttons or a logical HID event.
+- ENG MASTER FAULT/FIRE and other annunciators through a researched MobiFlight or SimConnect integration.
+
+### Configurator and profiles
+- Aircraft profiles for FlyByWire A320, Fenix and the default A320neo.
+- Diagnostics with live L/R graphs and AS5600 magnetic-field status indicators MD/ML/MH.
+- Keep host math tests and CI compilation mandatory.
 
 ## Working rules
 
