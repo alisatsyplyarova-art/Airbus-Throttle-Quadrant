@@ -2,76 +2,62 @@
 
 Самодельный USB-квадрант управления тягой для Microsoft Flight Simulator (MSFS), вдохновлённый органами управления Airbus A320.
 
-> **Статус:** разработка, прошивка **1.0.02**. Работа на целевом оборудовании пока не подтверждена. Изменения версии 1.0.02 улучшают диагностику ошибок датчиков и отклоняют некорректный диапазон калибровки; это не означает завершение проверки этапа.
+> **Статус:** прошивка 1.0.03 в разработке. Код и документация для дополнительных переключателей добавлены, но компиляция и испытания на целевом оборудовании ещё не подтверждены.
 
 ## Зафиксированные решения
 
 - Контроллер: Arduino Pro Micro (ATmega32U4).
-- Два основных рычага тяги: L (левый) и R (правый), каждый с магнитным датчиком угла AS5600.
-- Мультиплексор I²C TCA9548A: L — канал 0, R — канал 1.
-- USB HID: L → ось X, R → ось Y.
-- USB Serial: диагностика и отдельный конфигуратор для Windows.
-- Конфигуратор: Python + PySide6.
-- Механическая цель: характерные положения Airbus A320 — IDLE, CL, FLX/MCT и TOGA.
-- Механизм REVERSE пока не выбран. Архитектура должна поддерживать угловую зону, отдельный датчик/выключатель подъёма рычага или отдельную кнопку/переключатель.
-- SPEED BRAKE, FLAPS и дополнительные кнопки/переключатели добавим после стабилизации двух основных рычагов.
+- Два основных рычага тяги: L и R, каждый с магнитным датчиком угла AS5600.
+- Мультиплексор I²C TCA9548A: левый датчик — канал 0, правый — канал 1.
+- USB HID: левый рычаг → ось X; правый рычаг → ось Y.
+- ENGINE MASTER 1/2 и трёхпозиционный поворотный селектор передаются как HID-кнопки.
+- Диагностика через USB Serial; планируемый конфигуратор Windows — Python + PySide6.
+- Механическая цель: положения Airbus A320 — IDLE, CL, FLX/MCT и TOGA. Фиксированные положения создаются механикой, AS5600 измеряет угол.
 
 ## Текущая прошивка
 
 Файл: `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`.
 
 - Чтение двух AS5600 через TCA9548A.
-- USB HID оси X/Y.
+- USB HID: оси X/Y и четыре кнопки.
 - Настраиваемые в исходном коде крайние углы, инверсия и фильтрация.
-- Круговая арифметика диапазона поддерживает пересечение 4095 → 0.
-- Одинаковые крайние углы отклоняются как ошибочная калибровка, а не трактуются как полный оборот.
-- При ошибке чтения датчика прошивка удерживает последнее значение HID-оси и явно показывает `ERR_READ` и `HID HOLD` в Serial. При некорректном диапазоне выводится `ERR_CAL`.
-- Диагностический вывод Serial — 115200 бод.
+- Поддерживается круговой диапазон, пересекающий 4095 → 0; одинаковые крайние углы отклоняются как ошибочная калибровка.
+- При ошибке чтения датчика HID удерживает последнее корректное положение оси и сообщает `ERR_READ` / `HID HOLD`; некорректный диапазон сообщает `ERR_CAL`.
+- Входы переключателей используют `INPUT_PULLUP` и подавление дребезга 25 мс.
+- Диагностика Serial — 115200 бод.
 
-Пока не реализовано или не проверено:
+### Распиновка переключателей
 
-- пользовательская калибровка и сохранение конфигурации в EEPROM;
-- проверка на реальном оборудовании и компиляция с окончательно выбранным окружением;
-- автомат состояний фиксированных положений рычага;
-- абстракция источника сигнала REVERSE;
-- конфигуратор для Windows;
-- SPEED BRAKE, FLAPS и дополнительные кнопки.
+| Элемент | Вывод Pro Micro | HID |
+|---|---:|---|
+| ENGINE MASTER 1 | D4 | Кнопка 1 |
+| ENGINE MASTER 2 | D5 | Кнопка 2 |
+| Контакт A селектора | D6 | Кнопка 3 |
+| Контакт B селектора | D7 | Кнопка 4 |
 
-**Политика ошибки датчика:** HID удерживает последнее корректное положение оси, чтобы не создавать резкий скачок. Это удержанное значение не считается новым измерением; ошибка обозначается в Serial. Такое поведение требует проверки на реальном оборудовании и в MSFS.
+Каждый контакт подключается между цифровым выводом и GND. Для селектора с двумя нормально разомкнутыми контактами (2NO) предполагается: CRANK — контакт A замкнут, NORM — оба разомкнуты, IGN/START — контакт B замкнут. Перед подключением необходимо проверить реальную контактную схему мультиметром.
 
-## Оборудование
+## Что ещё не завершено или не проверено
 
-- Arduino Pro Micro, ATmega32U4 (проверьте конкретную версию: 5 В/16 МГц или 3,3 В).
-- 2 × модуля AS5600 и подходящие магниты.
-- 1 × мультиплексор I²C TCA9548A.
-- Механический квадрант и USB-кабель.
+- компиляция с выбранной версией платы и библиотеки Joystick;
+- проверка прошивки на реальном оборудовании и в MSFS;
+- пользовательская калибровка и сохранение настроек в EEPROM;
+- логика фиксированных положений рычагов и REVERSE;
+- конфигуратор Windows;
+- SPEED BRAKE и FLAPS.
 
-Перед подключением проверьте допустимое напряжение модулей и уровни логики I²C. Не считайте автоматически, что любая плата датчика допускает питание 5 В.
+## Оборудование и сборка
 
-Схема подключения: [Electronics/WIRING.md](Electronics/WIRING.md).
+- Arduino Pro Micro ATmega32U4; уточните версию платы (5 В/16 МГц или 3,3 В).
+- 2 × AS5600, 1 × TCA9548A, механический квадрант и USB-кабель.
+- Библиотека Arduino: **Joystick by Matthew Heironimus**.
+- Адрес TCA9548A: `0x70`; AS5600: `0x36`; I²C: 100 кГц.
 
-## Сборка и загрузка
+Откройте `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`, выберите подходящую плату Pro Micro/Leonardo, загрузите скетч и откройте Serial Monitor на 115200 бод. Перед подключением проверьте напряжение модулей и уровни логики I²C.
 
-1. Установите Arduino IDE и подходящее описание платы Pro Micro/Leonardo.
-2. Установите библиотеку **Joystick by Matthew Heironimus**.
-3. Откройте скетч `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`.
-4. Проверьте выбор платы, выводы SDA/SCL, каналы датчиков и электрические уровни.
-5. Загрузите прошивку и откройте Serial Monitor на скорости 115200 бод.
+Схема подключения: [Electronics/WIRING.md](Electronics/WIRING.md). История изменений: [CHANGELOG.md](CHANGELOG.md). Дорожная карта: [Documentation/ROADMAP.md](Documentation/ROADMAP.md).
 
-Скетч рассчитан на адрес TCA9548A `0x70`, левый рычаг L на канале 0 и правый R на канале 1. Компиляция и проверка на фактическом оборудовании пока не подтверждены.
-
-## Документы проекта
-
-- [Дорожная карта](Documentation/ROADMAP.md)
-- [Архитектура прошивки](Documentation/FIRMWARE_ARCHITECTURE.md)
-- [Схема подключения](Electronics/WIRING.md)
-- [История изменений](CHANGELOG.md)
-
-## Версии и проверка
-
-Текущая разрабатываемая версия — 1.0.02. Этап нельзя считать завершённым, пока не выполнены критерии проверки на целевом оборудовании. Подробности — в CHANGELOG.md и ROADMAP.md.
-
-Это любительский контроллер, а не сертифицированное авиационное оборудование. Физические фиксированные положения создаются механикой; AS5600 только измеряет угол.
+Это любительский контроллер, а не сертифицированное авиационное оборудование.
 
 ---
 
@@ -79,73 +65,54 @@
 
 DIY USB throttle quadrant for Microsoft Flight Simulator (MSFS), inspired by Airbus A320 controls.
 
-> **Status:** firmware **1.0.02** is under development. Target hardware has not been validated. This version improves sensor-fault diagnostics and rejects invalid calibration spans; it does not mean the milestone has passed validation.
+> **Status:** firmware 1.0.03 is under development. Additional switch code and wiring documentation have been added, but compilation and target-hardware validation are not yet confirmed.
 
-## Fixed project decisions
+## Fixed decisions
 
 - Controller: Arduino Pro Micro (ATmega32U4).
-- Two main throttle levers: L (left) and R (right), each with an AS5600 magnetic angle sensor.
-- TCA9548A I²C multiplexer: L on channel 0, R on channel 1.
-- USB HID: L → X axis, R → Y axis.
-- USB Serial: diagnostics and a separate Windows configurator.
-- Configurator: Python + PySide6.
-- Mechanical goal: Airbus A320-style IDLE, CL, FLX/MCT and TOGA detents.
-- The REVERSE mechanism remains undecided. The architecture should support an angle zone, a separate lift switch/sensor, or a separate button/switch.
-- SPEED BRAKE, FLAPS and additional buttons/switches are deferred until the two main levers are stable.
+- Two throttle levers L/R, each with an AS5600 magnetic angle sensor.
+- TCA9548A I²C multiplexer: left sensor on channel 0, right sensor on channel 1.
+- USB HID: left lever → X axis; right lever → Y axis.
+- ENGINE MASTER 1/2 and a 3-position rotary selector are exposed as HID buttons.
+- USB Serial diagnostics; planned Windows configurator uses Python + PySide6.
+- Mechanical goal: Airbus A320-style IDLE, CL, FLX/MCT and TOGA detents. Mechanical detents are physical; AS5600 measures angle.
 
 ## Current firmware
 
 File: `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`.
 
 - Reads two AS5600 sensors through TCA9548A.
-- USB HID X/Y axes.
-- Source-code endpoint settings, inversion and filtering.
-- Circular arithmetic supports travel crossing 4095 → 0.
-- Equal endpoints are rejected as invalid calibration instead of being treated as a full revolution.
-- On sensor read failure, the last HID axis value is held and Serial explicitly reports `ERR_READ` and `HID HOLD`. Invalid calibration is reported as `ERR_CAL`.
-- Serial diagnostics run at 115200 baud.
+- USB HID exposes X/Y axes and four buttons.
+- Source-code calibration endpoints, inversion and filtering.
+- Supports circular angle ranges crossing 4095 → 0; equal endpoints are rejected.
+- Holds the last valid HID axis value on sensor faults and reports `ERR_READ` / `HID HOLD`; invalid calibration reports `ERR_CAL`.
+- Switch inputs use `INPUT_PULLUP` and 25 ms debounce.
+- Serial diagnostics: 115200 baud.
 
-Not yet implemented or verified:
+| Control | Pro Micro pin | HID |
+|---|---:|---|
+| ENGINE MASTER 1 | D4 | Button 1 |
+| ENGINE MASTER 2 | D5 | Button 2 |
+| Selector contact A | D6 | Button 3 |
+| Selector contact B | D7 | Button 4 |
 
-- user calibration and EEPROM configuration storage;
-- compilation in the final selected environment and real-hardware validation;
-- detent state machine;
-- REVERSE input abstraction;
-- Windows configurator;
-- SPEED BRAKE, FLAPS and extra buttons.
+Connect each switch contact between its pin and GND. The assumed selector behaviour is for two normally-open contacts (2NO): CRANK closes A, NORM leaves both open, IGN/START closes B. Verify the actual switch contact diagram with a multimeter before wiring.
 
-**Sensor fault policy:** hold the last valid HID axis position to avoid an abrupt jump. The held value is not considered a new measurement; Serial reports the fault. This behaviour still requires testing on real hardware and in MSFS.
+## Not yet complete or validated
 
-## Hardware
-
-- Arduino Pro Micro, ATmega32U4 (verify the exact 5 V/16 MHz or 3.3 V variant).
-- 2 × AS5600 modules and matching magnets.
-- 1 × TCA9548A I²C multiplexer.
-- Mechanical quadrant and USB cable.
-
-Verify module voltage and I²C logic-level requirements before wiring. Do not assume all breakout boards tolerate 5 V.
-
-Wiring: [Electronics/WIRING.md](Electronics/WIRING.md).
+- Compilation with the final board package and Joystick library.
+- Real-hardware and MSFS tests.
+- User calibration and EEPROM storage.
+- Throttle detent and REVERSE logic.
+- Windows configurator.
+- SPEED BRAKE and FLAPS.
 
 ## Build
 
-1. Install Arduino IDE and the matching Pro Micro/Leonardo board definition.
-2. Install **Joystick by Matthew Heironimus**.
-3. Open `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`.
-4. Verify board selection, SDA/SCL pins, sensor channels and electrical levels.
-5. Upload and open Serial Monitor at 115200 baud.
+Install the board definition for Pro Micro/Leonardo and **Joystick by Matthew Heironimus**. Open `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`, select the correct board, upload, and open Serial Monitor at 115200 baud.
 
-The sketch expects TCA9548A address `0x70`, L on channel 0 and R on channel 1. Compilation and hardware validation are not yet confirmed.
+Defaults: TCA9548A `0x70`, AS5600 `0x36`, I²C 100 kHz. Verify supply voltage and I²C logic levels for the exact breakout boards before wiring.
 
-## Project documents
+Wiring: [Electronics/WIRING.md](Electronics/WIRING.md). Changelog: [CHANGELOG.md](CHANGELOG.md). Roadmap: [Documentation/ROADMAP.md](Documentation/ROADMAP.md).
 
-- [Roadmap](Documentation/ROADMAP.md)
-- [Firmware architecture](Documentation/FIRMWARE_ARCHITECTURE.md)
-- [Wiring](Electronics/WIRING.md)
-- [Changelog](CHANGELOG.md)
-
-## Versioning and validation
-
-The current development version is 1.0.02. The milestone is not complete until its target-hardware exit criteria pass. See CHANGELOG.md and ROADMAP.md.
-
-This is a hobby controller, not certified aviation equipment. Physical detents are created by the mechanism; AS5600 only measures angle.
+This is a hobby controller, not certified aviation equipment.
