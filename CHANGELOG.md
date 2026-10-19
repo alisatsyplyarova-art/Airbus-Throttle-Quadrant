@@ -1,3 +1,15 @@
+## Не выпущено — выбран блокируемый тумблер SALECOM T8013 (2026-10-20) / Unreleased — locking SALECOM T8013 toggle selected (2026-10-20)
+
+- Зафиксирован выбранный компонент: SALECOM T8013 ON-ON, 3 контакта, с требованием подъёма рычага перед переключением (lift-to-unlock).
+- Ссылка на товар: https://aliexpress.ru/item/1005001356175064.html?sku_id=12000036488180838 (item 1005001356175064, SKU 12000036488180838).
+- Точное исполнение механизма блокировки и расположение выводов нужно подтвердить по карточке товара/чертежу до установки на PCB. Назначение переключателя, GPIO и подключение пока не зафиксированы.
+- Это запись о выборе компонента, а не подтверждение покупки или аппаратной проверки.
+
+- Selected component: SALECOM T8013 ON-ON, 3-pin, with a lift-to-unlock lever requirement.
+- Product link: https://aliexpress.ru/item/1005001356175064.html?sku_id=12000036488180838 (item 1005001356175064, SKU 12000036488180838).
+- Confirm the exact locking mechanism and PCB pin layout against the listing/drawing before installation. The control function, GPIO and wiring are not yet assigned.
+- This records a component selection; it does not claim purchase or hardware validation.
+
 # История изменений / Changelog
 
 ## Не выпущено — выбран OLED-модуль с четырьмя кнопками (2026-10-19) / Unreleased — four-button OLED module selected (2026-10-19)
