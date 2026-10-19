@@ -1,6 +1,6 @@
 /*
   Airbus Throttle Quadrant
-  Firmware version: 1.0.03
+  Firmware version: 1.0.04
   Controller: Arduino Pro Micro / ATmega32U4
   Sensors: 2 x AS5600 via TCA9548A I2C multiplexer
 
@@ -21,7 +21,7 @@
 #include <Joystick.h>
 #include "AxisMath.h"
 
-const char* FW_VERSION = "1.0.03";
+const char* FW_VERSION = "1.0.04";
 
 // I2C addresses
 const uint8_t TCA9548A_ADDR = 0x70;
