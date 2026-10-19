@@ -20,8 +20,14 @@
 ## Этапы
 
 ### 1.0.04 — Надёжность датчиков, I²C и тесты
-**Состояние:** исходный код обновлён; компиляция и аппаратная проверка ещё не подтверждены.
+**Состояние:** исправления внесены; host-тесты проходят в GitHub Actions. Проверка компиляции Pro Micro и испытания на аппаратуре ожидают подтверждения.
 
+- Устранить скачок при шуме за границей кругового диапазона: ограничивать значение ближайшим краем.
+- Не публиковать произвольное стартовое значение 50%; обновлять ось после первого валидного чтения.
+- Использовать I²C 400 кГц и тайм-аут 25 мс, отключать каналы TCA9548A после чтения.
+- Читать STATUS AS5600: MD/ML/MH; сообщать о потере датчика после 10 подряд ошибок.
+- Заменить блокирующий `delay(5)` планировщиком на `millis()`.
+- Прогонять host-тесты круговой математики и автоматическую компиляцию через GitHub Actions.
 - Скомпилировать проект с точным описанием целевой платы Pro Micro и выбранной библиотекой Joystick.
 - Проверить оба канала AS5600 через TCA9548A.
 - Проверить, что ошибки чтения явно отображаются в Serial, а удержание последнего HID-значения не маскируется под новое измерение.
@@ -129,8 +135,14 @@
 ## Milestones
 
 ### 1.0.04 — Sensor reliability, I²C and tests
-**Status:** source updated; compilation and hardware validation are still pending.
+**Status:** fixes are committed; host tests pass in GitHub Actions. Pro Micro compilation and hardware tests still need confirmation.
 
+- Clamp out-of-range circular samples to the nearest endpoint to prevent jumps near IDLE.
+- Do not publish an arbitrary 50% startup axis value; update each axis after its first valid sample.
+- Use 400 kHz I²C and a 25 ms timeout; disable TCA9548A channels after reads.
+- Read AS5600 STATUS MD/ML/MH and report sensor loss after 10 consecutive failures.
+- Replace blocking `delay(5)` with a `millis()` scheduler.
+- Run host tests for circular math and automatic Pro Micro compilation in GitHub Actions.
 - Compile with the exact target Pro Micro board definition and selected Joystick library.
 - Verify both AS5600 channels through TCA9548A.
 - Confirm that read faults are explicit in Serial and that a held HID value is not presented as a new measurement.
