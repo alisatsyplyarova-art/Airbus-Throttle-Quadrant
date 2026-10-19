@@ -1,21 +1,59 @@
-MIT License
+ЛИЦЕНЗИЯ ПРОЕКТА AIRBUS THROTTLE QUADRANT
+Условия использования с сохранением всех прав
 
-Copyright (c) 2026 Airbus Throttle Quadrant contributors
+Copyright (c) 2026 Автор проекта Airbus Throttle Quadrant.
+Все права защищены.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Авторское право
+Исходный код, прошивка, документация, схемы, чертежи, модели и другие материалы проекта Airbus Throttle Quadrant (далее — «Материалы») охраняются авторским правом и иными применимыми нормами законодательства.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. Разрешённое личное использование
+Без отдельного разрешения допускается скачивать и просматривать Материалы, а также использовать их для личных, некоммерческих целей. Допускается изменять копию Материалов исключительно для личного некоммерческого использования при соблюдении применимого законодательства.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+3. Коммерческое использование — только с разрешения автора
+Любое коммерческое использование Материалов допускается только с предварительного письменного разрешения автора. К коммерческому использованию, в частности, относятся производство или сборка устройств для продажи, продажа устройств или комплектующих на основе проекта, включение Материалов в коммерческие продукты или услуги, использование в работе по заказу, а также иное использование с целью получения коммерческой выгоды.
+
+4. Публикация и распространение на других ресурсах — только с разрешения автора
+Запрещается без предварительного письменного разрешения автора размещать Материалы полностью или частично на других сайтах, репозиториях, форумах, файлообменниках, в социальных сетях, каталогах и иных сторонних ресурсах. Это ограничение распространяется, в частности, на повторную публикацию исходного кода, прошивки, документации, схем, чертежей и производных материалов.
+
+5. Иные ограничения
+Без предварительного письменного разрешения автора не допускается выдавать Материалы или производные от них работы за собственный проект, удалять уведомления об авторских правах либо предоставлять третьим лицам права, которые не предоставлены настоящими условиями. Разрешение автора должно быть получено до соответствующего использования или публикации.
+
+6. Отсутствие иных лицензий
+За исключением прямо разрешённого личного некоммерческого использования, никакие права или лицензии на Материалы, явные или подразумеваемые, не предоставляются. Настоящие условия не отменяют прав, которые пользователь имеет в силу императивных норм применимого законодательства.
+
+7. Отказ от гарантий
+Материалы предоставляются «как есть», без каких-либо гарантий, явных или подразумеваемых, включая гарантии пригодности для определённой цели и отсутствия нарушений прав третьих лиц. Автор не несёт ответственности за ущерб, возникший в результате использования Материалов, в пределах, допускаемых применимым законодательством.
+
+Для получения разрешения на коммерческое использование, публикацию или распространение Материалов на других ресурсах необходимо заранее связаться с автором через профиль автора на GitHub.
+
+---
+
+AIRBUS THROTTLE QUADRANT PROJECT LICENSE
+All Rights Reserved
+
+Copyright (c) 2026 Author of the Airbus Throttle Quadrant project.
+All rights reserved.
+
+1. Copyright
+The source code, firmware, documentation, schematics, drawings, models, and other materials in the Airbus Throttle Quadrant project (the “Materials”) are protected by copyright and other applicable laws.
+
+2. Permitted personal use
+You may download and view the Materials and use them for personal, non-commercial purposes without separate permission. You may modify your own copy solely for personal, non-commercial use, subject to applicable law.
+
+3. Commercial use requires permission
+Any commercial use of the Materials requires the author's prior written permission. Commercial use includes, without limitation, manufacturing or assembling devices for sale, selling devices or components based on the project, incorporating the Materials into commercial products or services, using them in paid work, or any other use for commercial advantage.
+
+4. Reposting or redistribution on other resources requires permission
+Without the author's prior written permission, you may not publish, repost, mirror, or redistribute the Materials, in whole or in part, on other websites, repositories, forums, file-sharing services, social networks, catalogs, or other third-party resources. This includes reposting source code, firmware, documentation, schematics, drawings, and derivative materials.
+
+5. Other restrictions
+Without the author's prior written permission, you may not claim the Materials or derivative works as your own, remove copyright notices, or grant third parties rights not provided by these terms. Permission must be obtained before the relevant use or publication.
+
+6. No other license granted
+Except for the personal, non-commercial use expressly permitted above, no rights or licenses to the Materials, whether express or implied, are granted. These terms do not restrict rights that users may have under mandatory applicable law.
+
+7. Disclaimer
+The Materials are provided “as is,” without warranties of any kind, express or implied, including warranties of fitness for a particular purpose and non-infringement. To the extent permitted by applicable law, the author shall not be liable for damages arising from use of the Materials.
+
+To request permission for commercial use or for publication or redistribution on another resource, contact the author in advance through the author's GitHub profile.
