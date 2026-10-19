@@ -100,6 +100,149 @@ bool sensorLostRReported = false;
 uint8_t statusL = 0;
 uint8_t statusR = 0;
 
+uint16_t latestRawL = 0, latestRawR = 0;
+bool latestRawValidL = false, latestRawValidR = false;
+char serialLine[64];
+uint8_t serialLineLength = 0;
+bool serialLineOverflow = false;
+char calibrationAxis = 0;
+uint16_t calibrationMin = 0;
+bool calibrationMinCaptured = false;
+const uint8_t SERIAL_PROTOCOL_VERSION = 1;
+
+AxisConfig &axisConfig(char axis) { return axis == 'L' ? config.left : config.right; }
+bool axisRawValid(char axis) { return axis == 'L' ? latestRawValidL : latestRawValidR; }
+uint16_t axisRawValue(char axis) { return axis == 'L' ? latestRawL : latestRawR; }
+
+void printConfigResponse() {
+  Serial.print(F("CONFIG,PROTO=")); Serial.print(SERIAL_PROTOCOL_VERSION);
+  Serial.print(F(",SCHEMA=")); Serial.print(config.schema);
+  Serial.print(F(",L_MIN=")); Serial.print(config.left.rawMin);
+  Serial.print(F(",L_MAX=")); Serial.print(config.left.rawMax);
+  Serial.print(F(",L_INV=")); Serial.print(config.left.invert);
+  Serial.print(F(",R_MIN=")); Serial.print(config.right.rawMin);
+  Serial.print(F(",R_MAX=")); Serial.print(config.right.rawMax);
+  Serial.print(F(",R_INV=")); Serial.print(config.right.invert);
+  Serial.print(F(",FILTER=")); Serial.println(config.filterPercent);
+}
+void printStatusResponse() {
+  Serial.print(F("STATUS,FW=")); Serial.print(FW_VERSION);
+  Serial.print(F(",PROTO=")); Serial.print(SERIAL_PROTOCOL_VERSION);
+  Serial.print(F(",L_VALID=")); Serial.print(latestRawValidL ? 1 : 0);
+  Serial.print(F(",L_RAW=")); Serial.print(latestRawL);
+  Serial.print(F(",L_HID=")); Serial.print(haveL ? (int)filteredL : -1);
+  Serial.print(F(",L_MD=")); Serial.print((statusL & AS5600_MD) ? 1 : 0);
+  Serial.print(F(",L_ML=")); Serial.print((statusL & AS5600_ML) ? 1 : 0);
+  Serial.print(F(",L_MH=")); Serial.print((statusL & AS5600_MH) ? 1 : 0);
+  Serial.print(F(",R_VALID=")); Serial.print(latestRawValidR ? 1 : 0);
+  Serial.print(F(",R_RAW=")); Serial.print(latestRawR);
+  Serial.print(F(",R_HID=")); Serial.print(haveR ? (int)filteredR : -1);
+  Serial.print(F(",R_MD=")); Serial.print((statusR & AS5600_MD) ? 1 : 0);
+  Serial.print(F(",R_ML=")); Serial.print((statusR & AS5600_ML) ? 1 : 0);
+  Serial.print(F(",R_MH=")); Serial.println((statusR & AS5600_MH) ? 1 : 0);
+}
+void processSerialCommand(char *line) {
+  char *tokens[4] = { NULL, NULL, NULL, NULL };
+  uint8_t count = 0;
+  char *token = strtok(line, " \t");
+  while (token && count < 4) {
+    tokens[count++] = token;
+    token = strtok(NULL, " \t");
+  }
+  if (count == 0) return;
+  if (strcmp(tokens[0], "GET_STATUS") == 0 && count == 1) {
+    printStatusResponse(); return;
+  }
+  if (strcmp(tokens[0], "GET_CONFIG") == 0 && count == 1) {
+    printConfigResponse(); return;
+  }
+  if (strcmp(tokens[0], "SAVE_CONFIG") == 0 && count == 1) {
+    if (!configValid(config)) { Serial.println(F("ERR CONFIG_INVALID")); return; }
+    if (!configStorageSave(config)) { Serial.println(F("ERR EEPROM_WRITE")); return; }
+    Serial.println(F("OK SAVE_CONFIG")); return;
+  }
+  if (strcmp(tokens[0], "LOAD_DEFAULTS") == 0 && count == 1) {
+    configSetDefaults(config);
+    haveL = false; haveR = false;
+    calibrationAxis = 0; calibrationMinCaptured = false;
+    Serial.println(F("OK DEFAULTS_RAM")); return;
+  }
+  if (strcmp(tokens[0], "SET_FILTER") == 0 && count == 2) {
+    char *end = NULL;
+    long value = strtol(tokens[1], &end, 10);
+    if (!end || *end != '\0' || value < 1 || value > 100) {
+      Serial.println(F("ERR RANGE")); return;
+    }
+    config.filterPercent = (uint8_t)value;
+    Serial.println(F("OK SET_FILTER")); return;
+  }
+  if (strcmp(tokens[0], "SET_INVERT") == 0 && count == 3 &&
+      (strcmp(tokens[1], "L") == 0 || strcmp(tokens[1], "R") == 0)) {
+    if (strcmp(tokens[2], "0") != 0 && strcmp(tokens[2], "1") != 0) {
+      Serial.println(F("ERR RANGE")); return;
+    }
+    axisConfig(tokens[1][0]).invert = (uint8_t)(tokens[2][0] - '0');
+    Serial.println(F("OK SET_INVERT")); return;
+  }
+  if (strcmp(tokens[0], "CAL_START") == 0 && count == 2 &&
+      (strcmp(tokens[1], "L") == 0 || strcmp(tokens[1], "R") == 0)) {
+    calibrationAxis = tokens[1][0];
+    calibrationMinCaptured = false;
+    Serial.print(F("OK CAL_START ")); Serial.println(calibrationAxis);
+    return;
+  }
+  if (strcmp(tokens[0], "CAL_MARK_MIN") == 0 && count == 2 &&
+      (strcmp(tokens[1], "L") == 0 || strcmp(tokens[1], "R") == 0)) {
+    char axis = tokens[1][0];
+    if (calibrationAxis != axis) { Serial.println(F("ERR CAL_NOT_STARTED")); return; }
+    if (!axisRawValid(axis)) { Serial.println(F("ERR SENSOR_INVALID")); return; }
+    calibrationMin = axisRawValue(axis);
+    calibrationMinCaptured = true;
+    Serial.print(F("OK CAL_MARK_MIN ")); Serial.print(axis);
+    Serial.print(F(" RAW=")); Serial.println(calibrationMin);
+    return;
+  }
+  if (strcmp(tokens[0], "CAL_MARK_MAX") == 0 && count == 2 &&
+      (strcmp(tokens[1], "L") == 0 || strcmp(tokens[1], "R") == 0)) {
+    char axis = tokens[1][0];
+    if (calibrationAxis != axis || !calibrationMinCaptured) {
+      Serial.println(F("ERR CAL_MIN_REQUIRED")); return;
+    }
+    if (!axisRawValid(axis)) { Serial.println(F("ERR SENSOR_INVALID")); return; }
+    AxisConfig candidate = axisConfig(axis);
+    candidate.rawMin = calibrationMin;
+    candidate.rawMax = axisRawValue(axis);
+    if (!configAxisValid(candidate)) { Serial.println(F("ERR CAL_RANGE")); return; }
+    axisConfig(axis) = candidate;
+    calibrationAxis = 0;
+    calibrationMinCaptured = false;
+    Serial.print(F("OK CAL_COMPLETE ")); Serial.print(axis);
+    Serial.print(F(",MIN=")); Serial.print(candidate.rawMin);
+    Serial.print(F(",MAX=")); Serial.println(candidate.rawMax);
+    return;
+  }
+  Serial.println(F("ERR UNKNOWN_COMMAND"));
+}
+void processSerial() {
+  while (Serial.available() > 0) {
+    char ch = (char)Serial.read();
+    if (ch == '\r') continue;
+    if (ch == '\n') {
+      if (serialLineOverflow) Serial.println(F("ERR LINE_TOO_LONG"));
+      else {
+        serialLine[serialLineLength] = '\0';
+        processSerialCommand(serialLine);
+      }
+      serialLineLength = 0;
+      serialLineOverflow = false;
+    } else if (!serialLineOverflow) {
+      if (serialLineLength < sizeof(serialLine) - 1) serialLine[serialLineLength++] = ch;
+      else serialLineOverflow = true;
+    }
+  }
+}
+
+
 bool selectMuxChannel(uint8_t channel) {
   if (channel > 7) return false;
   Wire.clearWireTimeoutFlag();
