@@ -1,11 +1,15 @@
 /*
   Airbus Throttle Quadrant
-  Firmware version: 1.0.02
+  Firmware version: 1.0.03
   Controller: Arduino Pro Micro / ATmega32U4
   Sensors: 2 x AS5600 via TCA9548A I2C multiplexer
 
   L lever -> USB HID X axis
   R lever -> USB HID Y axis
+  Engine Master 1 -> HID button 1
+  Engine Master 2 -> HID button 2
+  3-position selector contact A -> HID button 3
+  3-position selector contact B -> HID button 4
 
   Required library:
     Joystick by Matthew Heironimus
@@ -16,7 +20,7 @@
 #include <Wire.h>
 #include <Joystick.h>
 
-const char* FW_VERSION = "1.0.02";
+const char* FW_VERSION = "1.0.03";
 
 // I2C addresses
 const uint8_t TCA9548A_ADDR = 0x70;
@@ -26,6 +30,16 @@ const uint8_t AS5600_RAW_ANGLE_H = 0x0C;
 // TCA9548A channels
 const uint8_t CHANNEL_L = 0;
 const uint8_t CHANNEL_R = 1;
+
+// Physical switch pins on Arduino Pro Micro (ATmega32U4).
+// Connect each switch contact between the pin and GND.
+// INPUT_PULLUP means LOW = contact closed / switch ON.
+const uint8_t PIN_ENGINE_MASTER_1 = 4;
+const uint8_t PIN_ENGINE_MASTER_2 = 5;
+const uint8_t PIN_SELECTOR_A = 6;
+const uint8_t PIN_SELECTOR_B = 7;
+const uint8_t SWITCH_COUNT = 4;
+const uint16_t SWITCH_DEBOUNCE_MS = 25;
 
 // Calibrate these values to the actual mechanical travel (0..4095).
 // The circular range may cross the 4095 -> 0 boundary.
@@ -48,12 +62,27 @@ const uint32_t DEBUG_INTERVAL_MS = 250;
 Joystick_ Joystick(
   JOYSTICK_DEFAULT_REPORT_ID,
   JOYSTICK_TYPE_JOYSTICK,
-  0, 0,                 // buttons, hat switches
+  4, 0,                 // 4 buttons, no hat switches
   true, true,           // X, Y
   false, false, false,  // Z, Rx, Ry
   false, false, false,  // Rz, rudder, throttle
   false, false, false   // accelerator, brake, steering
 );
+
+struct SwitchInput {
+  uint8_t pin;
+  uint8_t hidButton;     // Joystick library button indices start at 0.
+  bool rawState;
+  bool stableState;
+  uint32_t lastChangeMs;
+};
+
+SwitchInput switches[SWITCH_COUNT] = {
+  { PIN_ENGINE_MASTER_1, 0, HIGH, HIGH, 0 },
+  { PIN_ENGINE_MASTER_2, 1, HIGH, HIGH, 0 },
+  { PIN_SELECTOR_A,      2, HIGH, HIGH, 0 },
+  { PIN_SELECTOR_B,      3, HIGH, HIGH, 0 }
+};
 
 float filteredL = 512.0f;
 float filteredR = 512.0f;
@@ -117,10 +146,37 @@ float smoothValue(float previous, uint16_t current, bool &initialized) {
   return previous + FILTER_ALPHA * ((float)current - previous);
 }
 
+void updateSwitches(uint32_t now) {
+  for (uint8_t i = 0; i < SWITCH_COUNT; i++) {
+    bool currentRaw = digitalRead(switches[i].pin);
+
+    if (currentRaw != switches[i].rawState) {
+      switches[i].rawState = currentRaw;
+      switches[i].lastChangeMs = now;
+    }
+
+    if ((now - switches[i].lastChangeMs) >= SWITCH_DEBOUNCE_MS &&
+        switches[i].stableState != switches[i].rawState) {
+      switches[i].stableState = switches[i].rawState;
+
+      // INPUT_PULLUP: LOW means the switch contact is closed.
+      Joystick.setButton(switches[i].hidButton,
+                         switches[i].stableState == LOW ? 1 : 0);
+    }
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   Wire.begin();
   Wire.setClock(100000);
+
+  for (uint8_t i = 0; i < SWITCH_COUNT; i++) {
+    pinMode(switches[i].pin, INPUT_PULLUP);
+    switches[i].rawState = digitalRead(switches[i].pin);
+    switches[i].stableState = switches[i].rawState;
+    switches[i].lastChangeMs = millis();
+  }
 
   Joystick.setXAxisRange(HID_MIN, HID_MAX);
   Joystick.setYAxisRange(HID_MIN, HID_MAX);
@@ -129,11 +185,19 @@ void setup() {
   Joystick.setXAxis((int)filteredL);
   Joystick.setYAxis((int)filteredR);
 
+  // Publish the initial physical switch states after Joystick.begin().
+  for (uint8_t i = 0; i < SWITCH_COUNT; i++) {
+    Joystick.setButton(switches[i].hidButton,
+                       switches[i].stableState == LOW ? 1 : 0);
+  }
+
   Serial.println();
   Serial.println(F("Airbus Throttle Quadrant"));
   Serial.print(F("Firmware: "));
   Serial.println(FW_VERSION);
   Serial.println(F("TCA9548A: address 0x70; L=CH0; R=CH1"));
+  Serial.println(F("Switches: Engine1=D4/B1, Engine2=D5/B2, Selector A=D6/B3, B=D7/B4"));
+  Serial.println(F("Selector center position should leave both contacts open."));
   Serial.println(F("Sensor fault policy: hold last HID axis value and report fault."));
 }
 
@@ -148,8 +212,6 @@ void loop() {
   bool calOkL = readOkL && calibratedValue(rawL, L_RAW_MIN, L_RAW_MAX, L_INVERT, targetL);
   bool calOkR = readOkR && calibratedValue(rawR, R_RAW_MIN, R_RAW_MAX, R_INVERT, targetR);
 
-  // On read/calibration errors, do not publish a fabricated new position.
-  // HID retains the last valid axis value; Serial explicitly reports the hold.
   if (calOkL) {
     filteredL = smoothValue(filteredL, targetL, haveL);
     Joystick.setXAxis((int)filteredL);
@@ -161,6 +223,8 @@ void loop() {
   }
 
   uint32_t now = millis();
+  updateSwitches(now);
+
   if (now - lastDebugMs >= DEBUG_INTERVAL_MS) {
     lastDebugMs = now;
 
@@ -193,6 +257,15 @@ void loop() {
       Serial.print(F(" -> "));
       Serial.print((int)filteredR);
     }
+
+    Serial.print(F(" | SW E1="));
+    Serial.print(switches[0].stableState == LOW ? F("ON") : F("OFF"));
+    Serial.print(F(" E2="));
+    Serial.print(switches[1].stableState == LOW ? F("ON") : F("OFF"));
+    Serial.print(F(" SEL_A="));
+    Serial.print(switches[2].stableState == LOW ? F("1") : F("0"));
+    Serial.print(F(" SEL_B="));
+    Serial.print(switches[3].stableState == LOW ? F("1") : F("0"));
     Serial.println();
   }
 
