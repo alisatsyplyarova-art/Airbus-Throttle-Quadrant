@@ -1,5 +1,19 @@
 # История изменений / Changelog
 
+## Не выпущено — механическая концепция AS5600 (2026-10-19) / Unreleased — AS5600 mounting concept
+
+- Добавлен документ `Mechanical/AS5600_MOUNTING.md` с предварительной конструкцией держателя магнита и регулируемого кронштейна AS5600.
+- Зафиксированы стартовые параметры для CAD-прототипа, перечень необходимых измерений и последовательность механической проверки.
+- Размеры магнитов, осей, зазор и окончательная геометрия оставлены неподтверждёнными до фактических измерений; STL/STEP-модели ещё не созданы.
+
+**Статус:** документация фиксирует концепцию, а не готовый чертёж или проверенную механическую конструкцию.
+
+- Added `Mechanical/AS5600_MOUNTING.md` describing a preliminary magnet holder and adjustable AS5600 sensor bracket.
+- Recorded initial CAD parameters, required measurements, and the mechanical validation workflow.
+- Magnet/shaft dimensions, air gap, and final geometry remain unconfirmed pending measurements; no STL/STEP models have been created yet.
+
+**Status:** this records a concept, not a finalized drawing or validated mechanical design.
+
 ## 1.0.03 — Переключатели двигателя и селектор / Engine switches and selector
 
 - Добавлены входы ENGINE MASTER 1 и ENGINE MASTER 2 на D4 и D5.
