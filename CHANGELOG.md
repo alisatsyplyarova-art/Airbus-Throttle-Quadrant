@@ -2,6 +2,29 @@
 
 ## 1.0.04 — Надёжность датчиков и тесты / Sensor reliability and tests
 
+- Исправлена круговая калибровка: значение за пределами диапазона ограничивается ближайшим краем по круговому расстоянию.
+- Убрано произвольное стартовое значение осей 50%; оси обновляются после первого валидного измерения.
+- Добавлены тайм-аут I²C 25 мс, скорость 400 кГц и попытка отключить все каналы TCA9548A после чтения.
+- Добавлено чтение STATUS AS5600 (0x0B): MD — магнит обнаружен, ML/MH — предупреждения о слабом/сильном поле.
+- Добавлена диагностика потери датчика после 10 подряд неудачных чтений и сообщение о восстановлении.
+- Убран delay(5); опрос выполняется по millis() с интервалом 10 мс.
+- Математика вынесена в AxisMath.h; добавлены host-тесты и GitHub Actions.
+
+**Проверка:** изменения сохранены в репозитории, но компиляция CI и аппаратная проверка должны быть подтверждены отдельно. Wire.setWireTimeout() требует совместимого AVR Wire core.
+
+- Fixed circular calibration so out-of-range readings clamp to the nearest endpoint by circular distance.
+- Removed the arbitrary 50% startup axis value; axes update after the first valid sample.
+- Added a 25 ms I²C timeout, 400 kHz bus speed, and an attempt to disable all TCA9548A channels after reads.
+- Read AS5600 STATUS (0x0B): MD indicates magnet detected; ML/MH warn about weak/strong field.
+- Added sensor-loss reporting after 10 consecutive failed reads and recovery notification.
+- Replaced delay(5) with a millis()-scheduled 10 ms poll.
+- Isolated math in AxisMath.h; added host tests and GitHub Actions.
+
+**Validation:** CI compilation and hardware validation still need confirmation. Wire.setWireTimeout() requires a compatible AVR Wire core.
+
+
+## 1.0.04 — Надёжность датчиков и тесты / Sensor reliability and tests
+
 - Исправлена обработка значения вне кругового калибровочного диапазона: оно ограничивается ближайшим краем по круговому расстоянию, а не всегда концом диапазона.
 - Убрано произвольное стартовое значение осей 50%; оси обновляются только после первого валидного измерения.
 - Добавлен тайм-аут I²C 25 мс, скорость 400 кГц и попытка отключения всех каналов TCA9548A после чтения.
