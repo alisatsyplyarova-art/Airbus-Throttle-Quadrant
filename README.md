@@ -2,7 +2,7 @@
 
 Самодельный USB-квадрант управления тягой для Microsoft Flight Simulator (MSFS), вдохновлённый органами управления Airbus A320.
 
-> **Статус:** прошивка 1.0.03 в разработке. Код и документация для дополнительных переключателей добавлены, но компиляция и испытания на целевом оборудовании ещё не подтверждены.
+> **Статус:** прошивка 1.0.04 в разработке. Добавлены исправления обработки круговой калибровки, диагностика статуса магнитов и защита I²C; автоматическая проверка добавлена, аппаратная проверка ещё не подтверждена.
 
 ## Зафиксированные решения
 
@@ -39,6 +39,10 @@
 
 ## Что ещё не завершено или не проверено
 
+- калибровка без ПК и сохранение в EEPROM;
+- программные детенты и отдельный сигнал REVERSE;
+- GitHub Actions: фактический результат первого запуска CI нужно проверить после push.
+
 - компиляция с выбранной версией платы и библиотеки Joystick;
 - проверка прошивки на реальном оборудовании и в MSFS;
 - пользовательская калибровка и сохранение настроек в EEPROM;
@@ -51,7 +55,7 @@
 - Arduino Pro Micro ATmega32U4; уточните версию платы (5 В/16 МГц или 3,3 В).
 - 2 × AS5600, 1 × TCA9548A, механический квадрант и USB-кабель.
 - Библиотека Arduino: **Joystick by Matthew Heironimus**.
-- Адрес TCA9548A: `0x70`; AS5600: `0x36`; I²C: 100 кГц.
+- Адрес TCA9548A: `0x70`; AS5600: `0x36`; I²C: 400 кГц.
 
 Откройте `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`, выберите подходящую плату Pro Micro/Leonardo, загрузите скетч и откройте Serial Monitor на 115200 бод. Перед подключением проверьте напряжение модулей и уровни логики I²C.
 
@@ -65,7 +69,7 @@
 
 DIY USB throttle quadrant for Microsoft Flight Simulator (MSFS), inspired by Airbus A320 controls.
 
-> **Status:** firmware 1.0.03 is under development. Additional switch code and wiring documentation have been added, but compilation and target-hardware validation are not yet confirmed.
+> **Status:** firmware 1.0.04 is under development. Circular calibration handling, magnet-status diagnostics and I²C safeguards have been added. Automated checks are configured; hardware validation is still pending.
 
 ## Fixed decisions
 
@@ -100,6 +104,10 @@ Connect each switch contact between its pin and GND. The assumed selector behavi
 
 ## Not yet complete or validated
 
+- stand-alone calibration and EEPROM storage;
+- software detents and a separate REVERSE signal;
+- verify the result of the first GitHub Actions run after the workflow starts.
+
 - Compilation with the final board package and Joystick library.
 - Real-hardware and MSFS tests.
 - User calibration and EEPROM storage.
@@ -111,7 +119,7 @@ Connect each switch contact between its pin and GND. The assumed selector behavi
 
 Install the board definition for Pro Micro/Leonardo and **Joystick by Matthew Heironimus**. Open `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`, select the correct board, upload, and open Serial Monitor at 115200 baud.
 
-Defaults: TCA9548A `0x70`, AS5600 `0x36`, I²C 100 kHz. Verify supply voltage and I²C logic levels for the exact breakout boards before wiring.
+Defaults: TCA9548A `0x70`, AS5600 `0x36`, I²C 400 kHz. Verify supply voltage and I²C logic levels for the exact breakout boards before wiring.
 
 Wiring: [Electronics/WIRING.md](Electronics/WIRING.md). Preliminary AS5600 mounting concept: [Mechanical/AS5600_MOUNTING.md](Mechanical/AS5600_MOUNTING.md). Changelog: [CHANGELOG.md](CHANGELOG.md). Roadmap: [Documentation/ROADMAP.md](Documentation/ROADMAP.md).
 
