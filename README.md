@@ -55,7 +55,7 @@
 
 Откройте `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`, выберите подходящую плату Pro Micro/Leonardo, загрузите скетч и откройте Serial Monitor на 115200 бод. Перед подключением проверьте напряжение модулей и уровни логики I²C.
 
-Схема подключения: [Electronics/WIRING.md](Electronics/WIRING.md). История изменений: [CHANGELOG.md](CHANGELOG.md). Дорожная карта: [Documentation/ROADMAP.md](Documentation/ROADMAP.md).
+Схема подключения: [Electronics/WIRING.md](Electronics/WIRING.md). Механическая концепция крепления AS5600 и магнитов: [Mechanical/AS5600_MOUNTING.md](Mechanical/AS5600_MOUNTING.md). История изменений: [CHANGELOG.md](CHANGELOG.md). Дорожная карта: [Documentation/ROADMAP.md](Documentation/ROADMAP.md).
 
 Это любительский контроллер, а не сертифицированное авиационное оборудование.
 
@@ -113,6 +113,6 @@ Install the board definition for Pro Micro/Leonardo and **Joystick by Matthew He
 
 Defaults: TCA9548A `0x70`, AS5600 `0x36`, I²C 100 kHz. Verify supply voltage and I²C logic levels for the exact breakout boards before wiring.
 
-Wiring: [Electronics/WIRING.md](Electronics/WIRING.md). Changelog: [CHANGELOG.md](CHANGELOG.md). Roadmap: [Documentation/ROADMAP.md](Documentation/ROADMAP.md).
+Wiring: [Electronics/WIRING.md](Electronics/WIRING.md). Preliminary AS5600 mounting concept: [Mechanical/AS5600_MOUNTING.md](Mechanical/AS5600_MOUNTING.md). Changelog: [CHANGELOG.md](CHANGELOG.md). Roadmap: [Documentation/ROADMAP.md](Documentation/ROADMAP.md).
 
 This is a hobby controller, not certified aviation equipment.
