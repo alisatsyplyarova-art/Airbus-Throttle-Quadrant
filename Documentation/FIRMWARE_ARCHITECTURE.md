@@ -4,7 +4,7 @@
 **Симулятор:** Microsoft Flight Simulator  
 **Управление симулятором:** USB HID  
 **Настройка и диагностика:** USB Serial  
-**Текущая разрабатываемая прошивка:** 1.0.02. Код и аппаратная работа ещё не прошли окончательную проверку.
+**Текущая разрабатываемая прошивка:** 1.0.04. Код и аппаратная работа ещё не прошли окончательную проверку.
 
 ## 1. Поток данных
 
@@ -15,9 +15,12 @@
 5. Выходной слой передаёт оси/кнопки через USB HID, а состояние и настройки — через Serial.
 6. Хранилище конфигурации проверяет и сохраняет настройки в EEPROM.
 
-Достоверность датчика должна храниться отдельно от последнего измеренного значения. Текущая резервная стратегия версии 1.0.02 — удерживать последнее корректное значение HID, чтобы ошибка не вызывала резкий скачок оси, и явно сообщать через Serial об ошибке чтения (ERR_READ; HID HOLD) или ошибке диапазона (ERR_CAL). Удержанное значение не считается новым измерением. Это поведение ещё нужно проверить на целевом оборудовании и в MSFS.
+Достоверность датчика должна храниться отдельно от последнего измеренного значения. Текущая резервная стратегия версии 1.0.04 — удерживать последнее корректное значение HID, чтобы ошибка не вызывала резкий скачок оси, и явно сообщать через Serial об ошибке чтения (ERR_READ; HID HOLD) или ошибке диапазона (ERR_CAL). Удержанное значение не считается новым измерением. Это поведение ещё нужно проверить на целевом оборудовании и в MSFS.
 
 ## 2. Предлагаемые программные модули
+
+Математика круговой калибровки вынесена в `Firmware/AirbusThrottleQuadrant/AxisMath.h` и покрывается host-тестами. Чтение датчиков использует тайм-аут Wire, статус AS5600 и попытку отключить каналы мультиплексора после транзакции. Эти изменения пока не считаются проверенными на аппаратуре.
+
 
 | Модуль | Назначение |
 |---|---|
@@ -115,7 +118,7 @@ SPEED BRAKE, FLAPS и дополнительные кнопки намеренн
 **Simulator:** Microsoft Flight Simulator  
 **Control link:** USB HID  
 **Configuration and diagnostics:** USB Serial  
-**Current development firmware:** 1.0.02. Code and hardware behaviour have not yet completed final validation.
+**Current development firmware:** 1.0.04. Code and hardware behaviour have not yet completed final validation.
 
 ## 1. Data flow
 
@@ -126,9 +129,12 @@ SPEED BRAKE, FLAPS и дополнительные кнопки намеренн
 5. The output layer sends axes/buttons via USB HID and status/configuration responses via Serial.
 6. Configuration storage validates and persists settings in EEPROM.
 
-Sensor validity must be stored separately from the last measured value. The current firmware 1.0.02 fallback policy is to hold the last valid HID axis value to avoid an abrupt jump and explicitly report a read fault (ERR_READ; HID HOLD) or invalid range (ERR_CAL) over Serial. A held value is not a new measurement. This policy still requires validation on the target hardware and in MSFS.
+Sensor validity must be stored separately from the last measured value. The current firmware 1.0.04 fallback policy is to hold the last valid HID axis value to avoid an abrupt jump and explicitly report a read fault (ERR_READ; HID HOLD) or invalid range (ERR_CAL) over Serial. A held value is not a new measurement. This policy still requires validation on the target hardware and in MSFS.
 
 ## 2. Suggested software modules
+
+Circular calibration math is isolated in `Firmware/AirbusThrottleQuadrant/AxisMath.h` and covered by host tests. Sensor reads use Wire timeout support, AS5600 status diagnostics and an attempt to disable the multiplexer after each transaction. These changes are not yet hardware-validated.
+
 
 | Module | Responsibility |
 |---|---|
