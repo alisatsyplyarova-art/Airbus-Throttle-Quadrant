@@ -18,6 +18,8 @@ jobs:
         run: |
           g++ -std=c++11 -Wall -Wextra -Werror tests/config_core_test.cpp -o config_core_test
           ./config_core_test
+      - name: Check configurator Python syntax
+        run: python3 -m py_compile Configurator/main.py
 
   arduino-compile:
     runs-on: ubuntu-latest
