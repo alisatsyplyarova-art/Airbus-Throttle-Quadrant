@@ -1,0 +1,32 @@
+name: Firmware checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test axis math on host
+        run: |
+          g++ -std=c++11 -Wall -Wextra -Werror tests/axis_math_test.cpp -o axis_math_test
+          ./axis_math_test
+
+  arduino-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: arduino/setup-arduino-cli@v2
+      - uses: actions/checkout@v4
+      - name: Install SparkFun AVR core
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls https://raw.githubusercontent.com/sparkfun/Arduino_Boards/main/IDE_Board_Manager/package_sparkfun_index.json
+          arduino-cli core update-index
+          arduino-cli core install SparkFun:avr
+      - name: Install Joystick library
+        run: arduino-cli lib install "Joystick@2.1.1"
+      - name: Compile Pro Micro 5V/16MHz
+        run: arduino-cli compile --fqbn SparkFun:avr:promicro:5V16MHz Firmware/AirbusThrottleQuadrant
