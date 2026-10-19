@@ -291,7 +291,8 @@ float smoothValue(float previous, uint16_t current, bool &initialized) {
     initialized = true;
     return (float)current;
   }
-  return previous + FILTER_ALPHA * ((float)current - previous);
+  const float alpha = (float)config.filterPercent / 100.0f;
+  return previous + alpha * ((float)current - previous);
 }
 
 void updateSwitches(uint32_t now) {
@@ -316,6 +317,8 @@ void updateSwitches(uint32_t now) {
 
 void setup() {
   Serial.begin(115200);
+  configLoadedFromEeprom = configStorageLoad(config);
+  if (!configLoadedFromEeprom) configSetDefaults(config);
   Wire.begin();
   Wire.setClock(400000);
   Wire.setWireTimeout(I2C_TIMEOUT_US, true);
@@ -347,6 +350,9 @@ void setup() {
   Serial.println(F("Selector center position should leave both contacts open."));
   Serial.println(F("I2C: 400kHz, timeout 25ms; TCA9548A channels disabled after reads."));
   Serial.println(F("Sensor fault policy: hold last valid HID axis; report loss after 10 consecutive failures."));
+  Serial.print(F("Config source: "));
+  Serial.println(configLoadedFromEeprom ? F("EEPROM") : F("DEFAULTS (not saved)"));
+  Serial.println(F("Serial protocol v1: GET_STATUS, GET_CONFIG, CAL_START, CAL_MARK_MIN, CAL_MARK_MAX, SET_INVERT, SET_FILTER, SAVE_CONFIG, LOAD_DEFAULTS"));
 }
 
 void updateSensorHealth(bool readOk, uint8_t status, uint8_t &failures,
@@ -365,16 +371,23 @@ void updateSensorHealth(bool readOk, uint8_t status, uint8_t &failures,
   }
 }
 void loop() {
-  uint32_t now = millis(); updateSwitches(now);
+  uint32_t now = millis();
+  updateSwitches(now);
+  processSerial();
   if (now - lastSensorReadMs < SENSOR_INTERVAL_MS) return;
   lastSensorReadMs = now;
   uint16_t rawL=0, rawR=0, targetL=0, targetR=0;
   bool readOkL=readAS5600(CHANNEL_L,rawL,statusL), readOkR=readAS5600(CHANNEL_R,rawR,statusR);
   bool healthyL=readOkL && magnetDetected(statusL), healthyR=readOkR && magnetDetected(statusR);
+  latestRawValidL = healthyL; latestRawValidR = healthyR;
+  if (readOkL) latestRawL = rawL;
+  if (readOkR) latestRawR = rawR;
   updateSensorHealth(readOkL,statusL,failedReadsL,sensorLostLReported,F("L"));
   updateSensorHealth(readOkR,statusR,failedReadsR,sensorLostRReported,F("R"));
-  bool calOkL=healthyL && calibratedValue(rawL,L_RAW_MIN,L_RAW_MAX,L_INVERT,targetL);
-  bool calOkR=healthyR && calibratedValue(rawR,R_RAW_MIN,R_RAW_MAX,R_INVERT,targetR);
+  bool calOkL=healthyL && calibratedValue(rawL,config.left.rawMin,config.left.rawMax,
+                                           config.left.invert != 0,targetL);
+  bool calOkR=healthyR && calibratedValue(rawR,config.right.rawMin,config.right.rawMax,
+                                           config.right.invert != 0,targetR);
   if (calOkL) { filteredL=smoothValue(filteredL,targetL,haveL); Joystick.setXAxis((int)filteredL); }
   if (calOkR) { filteredR=smoothValue(filteredR,targetR,haveR); Joystick.setYAxis((int)filteredR); }
 
