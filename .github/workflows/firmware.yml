@@ -29,4 +29,4 @@ jobs:
       - name: Install Joystick library
         run: arduino-cli lib install "Joystick@2.1.1"
       - name: Compile Pro Micro 5V/16MHz
-        run: arduino-cli compile --fqbn SparkFun:avr:promicro:5V16MHz Firmware/AirbusThrottleQuadrant
+        run: arduino-cli compile --fqbn SparkFun:avr:promicro:cpu=16MHzatmega32U4 Firmware/AirbusThrottleQuadrant
