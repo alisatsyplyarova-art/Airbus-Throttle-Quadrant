@@ -1,5 +1,22 @@
 # История изменений / Changelog
 
+## 1.0.05 — Конфигурация, калибровка и Serial-протокол / Configuration, calibration and Serial protocol (в разработке / in progress)
+
+- Добавлены `ConfigCore.h` с версионируемой структурой конфигурации, проверкой полей и CRC-16/CCITT-FALSE.
+- Добавлен `ConfigStorage.h` для чтения/записи записи конфигурации в EEPROM с повторной проверкой после записи. EEPROM записывается только по явной команде `SAVE_CONFIG`.
+- Добавлен протокол Serial v1 с построчными командами: `GET_STATUS`, `GET_CONFIG`, `CAL_START`, `CAL_MARK_MIN`, `CAL_MARK_MAX`, `SET_INVERT`, `SET_FILTER`, `SAVE_CONFIG` и `LOAD_DEFAULTS`.
+- Парсер принимает команды без блокирующего ожидания строки, ограничивает длину буфера и отвечает кодами `OK`/`ERR`. Настройки по умолчанию при отсутствии/повреждении EEPROM загружаются в RAM без автоматической записи.
+- Добавлены host-тесты схемы, допустимых диапазонов и CRC в GitHub Actions.
+- Статус: реализация добавлена в отдельную ветку; CI/компиляция и испытания на реальном устройстве ещё не подтверждены.
+
+- Added `ConfigCore.h` with a versioned configuration record, field validation and CRC-16/CCITT-FALSE.
+- Added `ConfigStorage.h` for EEPROM load/save with read-back verification. EEPROM writes occur only on explicit `SAVE_CONFIG`.
+- Added Serial protocol v1 commands: `GET_STATUS`, `GET_CONFIG`, `CAL_START`, `CAL_MARK_MIN`, `CAL_MARK_MAX`, `SET_INVERT`, `SET_FILTER`, `SAVE_CONFIG` and `LOAD_DEFAULTS`.
+- The line parser does not wait for a full command, bounds its input buffer and returns `OK`/`ERR` responses. Missing/corrupt EEPROM uses RAM defaults without automatic writes.
+- Added host tests for schema, field ranges and CRC to GitHub Actions.
+- Status: implementation is on a feature branch; CI/compilation and real-hardware tests are still pending.
+
+
 ## Не выпущено — выбран OLED-модуль с четырьмя кнопками (2026-10-19) / Unreleased — four-button OLED module selected (2026-10-19)
 
 - Зафиксирован модуль OLED 0,96″ 128×64 с контроллером SSD1315, интерфейсом I²C, питанием 3,3 В и четырьмя независимыми контактами кнопок K1–K4; размеры по описанию продавца — 44,53×27,66 мм.
