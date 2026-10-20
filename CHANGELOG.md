@@ -1,3 +1,12 @@
+## Документация — анализ FreeJoy (2026-10-20) / Documentation — FreeJoy review (2026-10-20)
+
+- В дорожную карту добавлены приоритеты: диагностика RAW/OUT, статус датчиков MD/ML/MH, варианты фильтрации, опциональный dynamic deadband, кривые отклика, детенты с гистерезисом, профили JSON и тесты.
+- Зафиксированы ограничения совместимости: FreeJoy/STM32F103 и его SPI-ориентированный путь AS5600 нельзя переносить напрямую в ATmega32U4 + I²C/TCA9548A.
+- Прямой перенос кода пока не выполнялся; функции добавлены как план, не как реализованные возможности.
+- The roadmap now tracks RAW/OUT diagnostics, MD/ML/MH status, filtering options, opt-in dynamic deadband, response curves, hysteretic detents, JSON profiles and host tests.
+- Compatibility limits are documented: STM32F103 and FreeJoy's SPI-oriented AS5600 path are not directly portable to ATmega32U4 + I²C/TCA9548A.
+- No FreeJoy code has been copied yet; these are planned features, not implemented functionality.
+
 ## Не выпущено — выбран блокируемый тумблер SALECOM T8013 (2026-10-20) / Unreleased — locking SALECOM T8013 toggle selected (2026-10-20)
 
 - Зафиксирован выбранный компонент: SALECOM T8013 ON-ON, 3 контакта, с требованием подъёма рычага перед переключением (lift-to-unlock).
