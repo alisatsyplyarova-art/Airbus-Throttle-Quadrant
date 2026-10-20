@@ -2,7 +2,18 @@
 
 Самодельный USB-квадрант управления тягой для Microsoft Flight Simulator (MSFS), вдохновлённый органами управления Airbus A320.
 
-> **Статус:** прошивка 1.0.04 в разработке. Добавлены исправления обработки круговой калибровки, диагностика статуса магнитов и защита I²C; автоматическая проверка добавлена, аппаратная проверка ещё не подтверждена.
+> **Статус:** прошивка 1.0.05 в разработке в feature-ветке. Добавляются калибровка через Serial, версионируемая конфигурация и EEPROM; CI и аппаратная проверка ещё не подтверждены.
+
+## Лицензия / License
+
+Проект распространяется по лицензии **GNU GPL v3.0 only**. Разрешены использование, изучение, изменение и распространение, в том числе коммерческое, при соблюдении условий GPL-3.0. При распространении проекта или производных работ необходимо соблюдать требования лицензии, включая предоставление соответствующего исходного кода в предусмотренных GPL случаях и сохранение уведомлений об авторских правах.
+
+Код, заимствованный из других проектов, сохраняет применимые уведомления об авторстве и лицензионные условия. В частности, при включении кода FreeJoy необходимо сохранить его авторские уведомления и выполнить требования GPL-3.0.
+
+The project is licensed under **GNU GPL v3.0 only**. Use, study, modification, and redistribution—including commercial redistribution—are permitted subject to GPL-3.0. When distributing the project or derivative works, comply with the license requirements, including providing corresponding source code where required and preserving copyright notices.
+
+Code taken from other projects retains applicable copyright notices and license terms. In particular, if FreeJoy code is incorporated, preserve its notices and comply with GPL-3.0.
+
 
 ## Лицензия / License
 
@@ -32,11 +43,12 @@ Code taken from other projects retains applicable copyright notices and license 
 
 - Чтение двух AS5600 через TCA9548A.
 - USB HID: оси X/Y и четыре кнопки.
-- Настраиваемые в исходном коде крайние углы, инверсия и фильтрация.
+- Калибровочные концы, инверсия и фильтрация хранятся в runtime-конфигурации; параметры можно менять через Serial protocol v1.
 - Поддерживается круговой диапазон, пересекающий 4095 → 0; одинаковые крайние углы отклоняются как ошибочная калибровка.
 - При ошибке чтения датчика HID удерживает последнее корректное положение оси и сообщает `ERR_READ` / `HID HOLD`; некорректный диапазон сообщает `ERR_CAL`.
 - Входы переключателей используют `INPUT_PULLUP` и подавление дребезга 25 мс.
-- Диагностика Serial — 115200 бод.
+- Диагностика и настройка Serial — 115200 бод. Команды: `GET_STATUS`, `GET_CONFIG`, `CAL_START L|R`, `CAL_MARK_MIN L|R`, `CAL_MARK_MAX L|R`, `SET_INVERT L|R 0|1`, `SET_FILTER 1..100`, `SAVE_CONFIG`, `LOAD_DEFAULTS`.
+- Конфигурация EEPROM имеет сигнатуру, версию схемы и CRC; запись выполняется только командой `SAVE_CONFIG`. `LOAD_DEFAULTS` меняет настройки в RAM без записи.
 
 ### Распиновка переключателей
 
@@ -51,13 +63,12 @@ Code taken from other projects retains applicable copyright notices and license 
 
 ## Что ещё не завершено или не проверено
 
-- калибровка без ПК и сохранение в EEPROM;
+- OLED-меню калибровки без ПК (модуль выбран, GPIO и I²C-адрес ещё не проверены);
 - программные детенты и отдельный сигнал REVERSE;
 - GitHub Actions: фактический результат первого запуска CI нужно проверить после push.
 
 - компиляция с выбранной версией платы и библиотеки Joystick;
 - проверка прошивки на реальном оборудовании и в MSFS;
-- пользовательская калибровка и сохранение настроек в EEPROM;
 - логика фиксированных положений рычагов и REVERSE;
 - конфигуратор Windows;
 - SPEED BRAKE и FLAPS.
@@ -81,7 +92,7 @@ Code taken from other projects retains applicable copyright notices and license 
 
 DIY USB throttle quadrant for Microsoft Flight Simulator (MSFS), inspired by Airbus A320 controls.
 
-> **Status:** firmware 1.0.04 is under development. Circular calibration handling, magnet-status diagnostics and I²C safeguards have been added. Automated checks are configured; hardware validation is still pending.
+> **Status:** firmware 1.0.05 is under development on a feature branch. Serial calibration, a versioned configuration and EEPROM storage are being added; CI and hardware validation are still pending.
 
 ## Fixed decisions
 
@@ -99,11 +110,12 @@ File: `Firmware/AirbusThrottleQuadrant/AirbusThrottleQuadrant.ino`.
 
 - Reads two AS5600 sensors through TCA9548A.
 - USB HID exposes X/Y axes and four buttons.
-- Source-code calibration endpoints, inversion and filtering.
+- Calibration endpoints, inversion and filtering are runtime configuration parameters exposed through Serial protocol v1.
 - Supports circular angle ranges crossing 4095 → 0; equal endpoints are rejected.
 - Holds the last valid HID axis value on sensor faults and reports `ERR_READ` / `HID HOLD`; invalid calibration reports `ERR_CAL`.
 - Switch inputs use `INPUT_PULLUP` and 25 ms debounce.
-- Serial diagnostics: 115200 baud.
+- Serial diagnostics/configuration: 115200 baud. Commands: `GET_STATUS`, `GET_CONFIG`, `CAL_START L|R`, `CAL_MARK_MIN L|R`, `CAL_MARK_MAX L|R`, `SET_INVERT L|R 0|1`, `SET_FILTER 1..100`, `SAVE_CONFIG`, `LOAD_DEFAULTS`.
+- EEPROM config uses a signature, schema version and CRC; it is written only by `SAVE_CONFIG`. `LOAD_DEFAULTS` changes RAM settings without writing EEPROM.
 
 | Control | Pro Micro pin | HID |
 |---|---:|---|
@@ -116,13 +128,12 @@ Connect each switch contact between its pin and GND. The assumed selector behavi
 
 ## Not yet complete or validated
 
-- stand-alone calibration and EEPROM storage;
+- stand-alone OLED calibration menu (module selected; GPIO and I²C address are not yet verified);
 - software detents and a separate REVERSE signal;
 - verify the result of the first GitHub Actions run after the workflow starts.
 
 - Compilation with the final board package and Joystick library.
 - Real-hardware and MSFS tests.
-- User calibration and EEPROM storage.
 - Throttle detent and REVERSE logic.
 - Windows configurator.
 - SPEED BRAKE and FLAPS.

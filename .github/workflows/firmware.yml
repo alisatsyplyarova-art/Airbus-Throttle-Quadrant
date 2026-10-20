@@ -14,6 +14,12 @@ jobs:
         run: |
           g++ -std=c++11 -Wall -Wextra -Werror tests/axis_math_test.cpp -o axis_math_test
           ./axis_math_test
+      - name: Test configuration validation and CRC
+        run: |
+          g++ -std=c++11 -Wall -Wextra -Werror tests/config_core_test.cpp -o config_core_test
+          ./config_core_test
+      - name: Check configurator Python syntax
+        run: python3 -m py_compile Configurator/main.py
 
   arduino-compile:
     runs-on: ubuntu-latest
