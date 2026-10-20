@@ -240,3 +240,84 @@
 - Keep firmware changes small and update CHANGELOG.md.
 - Never claim hardware validation without actual results.
 - Keep SPEED BRAKE and FLAPS out of the first stable firmware milestone.
+
+## Анализ FreeJoy — функции для возможного переноса
+
+**Источник для изучения:** [FreeJoy firmware](https://github.com/FreeJoy-Team/FreeJoy), [настройка осей](https://github.com/FreeJoy-Team/FreeJoyWiki/blob/master/eng/Axis-configuration.md), [FreeJoy Configurator Qt](https://github.com/FreeJoy-Team/FreeJoyConfiguratorQt). FreeJoy распространяется под GPL-3.0. Наш проект теперь использует GPL-3.0-only; при фактическом переносе кода нужно сохранять исходные copyright/license notices и проверять лицензию конкретного файла и зависимостей.
+
+**Ограничения совместимости:** FreeJoy ориентирован на STM32F103, а наш контроллер — ATmega32U4; у FreeJoy AS5600 заявлен как SPI-источник, у нас AS5600 подключены по I²C через TCA9548A. Нельзя без проверки переносить драйверы датчиков, HAL, USB/HID и код, завязанный на STM32. В первую очередь изучать алгоритмы и переносить только подходящие части, адаптируя их под текущую архитектуру.
+
+### Приоритет A — диагностика и настройка осей
+- [ ] В конфигураторе показывать отдельно RAW (физическое значение AS5600) и OUT/HID (значение после калибровки и обработки) для L/R.
+- [ ] Добавить живые шкалы обеих осей и ограниченный по размеру график истории; показать MD/ML/MH, валидность чтения и ошибки датчиков.
+- [ ] Добавить проверку и визуализацию калибровки: минимальное/максимальное RAW, направление, эффективный круговой диапазон и состояние за пределами калибровки.
+- [ ] Сохранить поведение удержания последнего корректного HID-значения при ошибке датчика, но явно отображать ошибку и не выдавать удержанное значение за свежее измерение.
+
+### Приоритет B — управляемая фильтрация и точность
+- [ ] Сравнить текущий EMA-фильтр с несколькими понятными режимами сглаживания; показывать компромисс между дрожанием и задержкой.
+- [ ] Исследовать динамический deadband для подавления мелких колебаний неподвижного рычага. Настройка по умолчанию — выключена; значение и единицы должны быть понятны, без скачков у границ и потери полного хода.
+- [ ] Добавить регулируемую кривую отклика: Linear по умолчанию, затем Exponential/Inverse Exponential; произвольную кривую вводить только если интерфейс и память позволяют.
+- [ ] Рассмотреть настройку выходного разрешения/масштабирования только после проверки реального HID-диапазона Windows. Не менять существующий диапазон осей незаметно для пользователя.
+- [ ] Добавить host-тесты для каждой функции: монотонность, точные конечные значения, инверсия, круговой переход 4095→0, границы deadband, экстремальные параметры и отсутствие переполнений.
+
+### Приоритет C — детенты и логические кнопки
+- [ ] Использовать идею «ось → кнопки» для распознавания IDLE, CL, FLX/MCT и TOGA, если она подходит к модели управления; для каждой зоны задать гистерезис и проверку дребезга состояния.
+- [ ] Не смешивать аналоговый выход оси с состоянием детента: HID-ось продолжает работать, а детенты передаются отдельно только после утверждения HID-контракта.
+- [ ] Для REVERSE оставить отдельный выбираемый источник ANGLE_ZONE/LIFT_SWITCH/BUTTON/DISABLED; не привязывать его необратимо к общей кривой оси.
+- [ ] Для будущих тумблеров изучить явные режимы Toggle ON/OFF и обработку переходов состояний, но не менять текущую распиновку D4–D7 без отдельного решения.
+
+### Приоритет D — конфигуратор и профили
+- [ ] Развить PySide6-конфигуратор: живые RAW/OUT, график отклика выбранной кривой, проверка параметров до отправки и понятные ошибки протокола.
+- [ ] Добавить импорт/экспорт пользовательских профилей в версионируемый JSON; включить схему профиля, версию прошивки/конфигурации и проверку значений.
+- [ ] Поддержать профили самолётов только для порогов детентов и назначений, которые действительно различаются; базовую калибровку конкретного устройства хранить отдельно от профиля самолёта.
+- [ ] Сохранять в EEPROM только по явной команде пользователя; не выполнять запись при каждом движении слайдера. Предусмотреть проверку после записи и безопасную миграцию схемы конфигурации.
+
+### Порядок внедрения
+1. Сначала RAW/OUT и диагностика в конфигураторе.
+2. Затем тесты и сравнение режимов фильтрации; deadband — отдельная опция, выключенная по умолчанию.
+3. После этого — кривые отклика и их график.
+4. Далее — детенты с гистерезисом и отдельные события HID.
+5. В последнюю очередь — профили JSON и расширенные типы логики переключателей.
+
+**Критерии приёмки:** никаких изменений поведения по умолчанию без необходимости; существующая калибровка и Serial protocol остаются совместимыми либо версия протокола явно повышается; все математические функции покрыты host-тестами; прошивка компилируется для Pro Micro; аппаратные заявления делаются только после реальных испытаний.
+
+## FreeJoy review — candidate roadmap items
+
+**References:** [FreeJoy firmware](https://github.com/FreeJoy-Team/FreeJoy), [axis configuration guide](https://github.com/FreeJoy-Team/FreeJoyWiki/blob/master/eng/Axis-configuration.md), [FreeJoy Configurator Qt](https://github.com/FreeJoy-Team/FreeJoyConfiguratorQt). FreeJoy is GPL-3.0. This project now uses GPL-3.0-only; when copying code, preserve the original copyright/license notices and review the license of each file and dependency.
+
+**Compatibility limits:** FreeJoy targets STM32F103, while this project uses ATmega32U4. FreeJoy lists AS5600 as an SPI source; our AS5600 sensors use I²C through TCA9548A. Do not transplant STM32 drivers, HAL, USB/HID or hardware-specific code without review. Prioritise reusable algorithms and adapt them to the current architecture.
+
+### Priority A — axis diagnostics
+- [ ] Show RAW (physical AS5600 value) separately from OUT/HID (calibrated and processed output) for both axes.
+- [ ] Add live L/R bars and a bounded history graph; display MD/ML/MH, read validity and sensor errors.
+- [ ] Visualise calibration endpoints, direction, effective circular span and out-of-range samples.
+- [ ] Keep last-valid HID output on sensor failure, but expose the fault and never label the held value as a fresh measurement.
+
+### Priority B — filtering and response
+- [ ] Compare the current EMA filter with a small set of understandable smoothing modes; show the jitter-versus-latency trade-off.
+- [ ] Evaluate dynamic deadband for stationary-axis jitter. Default it to off; document units and avoid edge jumps or loss of full travel.
+- [ ] Add response curves: Linear by default, then Exponential/Inverse Exponential. Add user-defined curves only if UI and memory budgets allow.
+- [ ] Consider output resolution/scaling only after verifying the actual Windows HID range; never silently change the existing axis range.
+- [ ] Add host tests for monotonicity, exact endpoints, inversion, 4095→0 wrap-around, deadband boundaries, extreme settings and overflow safety.
+
+### Priority C — detents and logical buttons
+- [ ] Evaluate axis-to-button logic for IDLE, CL, FLX/MCT and TOGA; use hysteresis and state debounce for each zone.
+- [ ] Keep analog axis output independent from detent state; expose detents as separate HID events only after the HID contract is approved.
+- [ ] Keep REVERSE as a selectable ANGLE_ZONE/LIFT_SWITCH/BUTTON/DISABLED source, independent from the general axis curve.
+- [ ] Study explicit Toggle ON/OFF semantics for future switches; do not change existing D4–D7 pin mapping without a separate decision.
+
+### Priority D — configurator and profiles
+- [ ] Extend the PySide6 configurator with live RAW/OUT, response-curve preview, pre-send validation and clear protocol errors.
+- [ ] Add import/export of versioned JSON profiles with schema, firmware/config version and value validation.
+- [ ] Add aircraft profiles only for detent thresholds and assignments that genuinely differ; keep per-device calibration separate from aircraft profiles.
+- [ ] Write EEPROM only after explicit user action, never on every slider movement. Verify writes and plan safe configuration-schema migration.
+
+### Implementation order
+1. RAW/OUT and diagnostics in the configurator.
+2. Tests and comparison of filtering modes; deadband as a separate opt-in feature.
+3. Response curves and curve preview.
+4. Detents with hysteresis and separate HID events.
+5. JSON profiles and advanced switch logic.
+
+**Acceptance criteria:** preserve current default behaviour; keep the existing calibration and Serial protocol compatible or explicitly version protocol changes; cover math with host tests; compile for Pro Micro; claim hardware validation only after real tests.
+
