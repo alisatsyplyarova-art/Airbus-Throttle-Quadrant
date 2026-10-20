@@ -6,9 +6,14 @@
 
 ## Лицензия / License
 
-**Все права защищены.** Личное некоммерческое использование разрешено на условиях файла [LICENSE](LICENSE). Коммерческое использование, а также повторная публикация или размещение материалов проекта на других ресурсах допускаются только с предварительного письменного разрешения автора. Лицензия не является стандартной open-source лицензией.
+Проект распространяется по лицензии **GNU GPL v3.0 only**. Разрешены использование, изучение, изменение и распространение, в том числе коммерческое, при соблюдении условий GPL-3.0. При распространении проекта или производных работ необходимо соблюдать требования лицензии, включая предоставление соответствующего исходного кода в предусмотренных GPL случаях и сохранение уведомлений об авторских правах.
 
-**All rights reserved.** Personal non-commercial use is permitted under the [LICENSE](LICENSE) terms. Commercial use and reposting or redistribution of project materials on other resources require the author's prior written permission. This is not a standard open-source license.
+Код, заимствованный из других проектов, сохраняет применимые уведомления об авторстве и лицензионные условия. В частности, при включении кода FreeJoy необходимо сохранить его авторские уведомления и выполнить требования GPL-3.0.
+
+The project is licensed under **GNU GPL v3.0 only**. Use, study, modification, and redistribution—including commercial redistribution—are permitted subject to GPL-3.0. When distributing the project or derivative works, comply with the license requirements, including providing corresponding source code where required and preserving copyright notices.
+
+Code taken from other projects retains applicable copyright notices and license terms. In particular, if FreeJoy code is incorporated, preserve its notices and comply with GPL-3.0.
+
 
 ## Зафиксированные решения
 
